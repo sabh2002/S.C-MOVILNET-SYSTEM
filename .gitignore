@@ -1,0 +1,48 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+dist/
+*.egg-info/
+
+# --- Django ---
+# Ignora la base de datos local (SQLite)
+db.sqlite3
+db.sqlite3-journal
+
+# Ignora archivos de registro (logs)
+*.log
+
+# Ignora archivos cargados por usuarios (Media)
+media/
+
+# Ignora archivos estáticos recolectados (Static)
+# Solo si usas 'python manage.py collectstatic'
+staticfiles/
+static_cdn/
+
+# --- Secretos y Configuración ---
+# ¡NUNCA subas estos archivos!
+.env
+.secrets
+*.key
+
+# --- IDEs y Editores ---
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# --- Pruebas y Cobertura ---
+.tox/
+.coverage
+htmlcov/
+.pytest_cache/
