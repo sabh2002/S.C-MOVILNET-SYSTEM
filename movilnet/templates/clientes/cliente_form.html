@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Editar{% else %}Agregar{% endif %} Cliente - Movilnet System{% endblock %}
+
+{% block content %}
+<div class="header-section" style="margin-bottom: 30px;">
+    <h1 class="header-title">{% if object %}Editar{% else %}Agregar{% endif %} Cliente</h1>
+</div>
+
+<div style="background: white; padding: 30px; border-radius: 8px;">
+    <form method="post">
+        {% csrf_token %}
+        
+        {% if form.non_field_errors %}
+            <div style="background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #f5c6cb;">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+        
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="{{ form.nombre.id_for_label }}">{{ form.nombre.label }} *</label>
+                {{ form.nombre }}
+                {% if form.nombre.errors %}
+                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 5px;">
+                        {{ form.nombre.errors }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.cedula.id_for_label }}">{{ form.cedula.label }} *</label>
+                {{ form.cedula }}
+                {% if form.cedula.help_text %}
+                    <small style="color: #666; font-size: 0.875rem;">{{ form.cedula.help_text }}</small>
+                {% endif %}
+                {% if form.cedula.errors %}
+                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 5px;">
+                        {{ form.cedula.errors }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.telefono.id_for_label }}">{{ form.telefono.label }} *</label>
+                {{ form.telefono }}
+                {% if form.telefono.errors %}
+                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 5px;">
+                        {{ form.telefono.errors }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="{{ form.direccion.id_for_label }}">{{ form.direccion.label }}</label>
+            {{ form.direccion }}
+            {% if form.direccion.errors %}
+                <div style="color: #dc3545; font-size: 0.875rem; margin-top: 5px;">
+                    {{ form.direccion.errors }}
+                </div>
+            {% endif %}
+        </div>
+
+        <div style="margin-top: 30px; display: flex; gap: 10px;">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Guardar
+            </button>
+            <a href="{% url 'cliente_list' %}" class="btn btn-outline">
+                <i class="fas fa-times"></i> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

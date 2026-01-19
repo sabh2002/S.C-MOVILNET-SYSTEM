@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Movilnet System{% endblock %}
+
+{% block content %}
+<div class="header-section" style="margin-bottom: 30px;">
+    <h1 class="header-title">Dashboard - Panel de Control</h1>
+</div>
+
+<!-- Tarjetas de Estadísticas -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
+    <!-- Productos -->
+    <div style="background: white; padding: 25px; border-radius: 8px; border-left: 5px solid var(--primary-color); box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h3 style="color: #666; font-size: 0.9rem; margin-bottom: 10px;">PRODUCTOS ACTIVOS</h3>
+                <p style="font-size: 2.5rem; font-weight: bold; color: var(--primary-color); margin: 0;">{{ total_productos }}</p>
+            </div>
+            <i class="fas fa-mobile-alt" style="font-size: 3rem; color: var(--primary-color); opacity: 0.3;"></i>
+        </div>
+        <a href="{% url 'producto_list' %}" style="display: block; margin-top: 15px; color: var(--primary-color); text-decoration: none; font-size: 0.9rem;">
+            Ver todos <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+
+    <!-- Clientes -->
+    <div style="background: white; padding: 25px; border-radius: 8px; border-left: 5px solid #333; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h3 style="color: #666; font-size: 0.9rem; margin-bottom: 10px;">CLIENTES</h3>
+                <p style="font-size: 2.5rem; font-weight: bold; color: #333; margin: 0;">{{ total_clientes }}</p>
+            </div>
+            <i class="fas fa-users" style="font-size: 3rem; color: #333; opacity: 0.3;"></i>
+        </div>
+        <a href="{% url 'cliente_list' %}" style="display: block; margin-top: 15px; color: #333; text-decoration: none; font-size: 0.9rem;">
+            Ver todos <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+
+    <!-- Proveedores -->
+    <div style="background: white; padding: 25px; border-radius: 8px; border-left: 5px solid #2196F3; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h3 style="color: #666; font-size: 0.9rem; margin-bottom: 10px;">PROVEEDORES</h3>
+                <p style="font-size: 2.5rem; font-weight: bold; color: #2196F3; margin: 0;">{{ total_proveedores }}</p>
+            </div>
+            <i class="fas fa-truck" style="font-size: 3rem; color: #2196F3; opacity: 0.3;"></i>
+        </div>
+        <a href="{% url 'proveedor_list' %}" style="display: block; margin-top: 15px; color: #2196F3; text-decoration: none; font-size: 0.9rem;">
+            Ver todos <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+
+    <!-- Marcas -->
+    <div style="background: white; padding: 25px; border-radius: 8px; border-left: 5px solid #ff9800; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h3 style="color: #666; font-size: 0.9rem; margin-bottom: 10px;">MARCAS</h3>
+                <p style="font-size: 2.5rem; font-weight: bold; color: #ff9800; margin: 0;">{{ total_marcas }}</p>
+            </div>
+            <i class="fas fa-tags" style="font-size: 3rem; color: #ff9800; opacity: 0.3;"></i>
+        </div>
+        <a href="{% url 'marca_list' %}" style="display: block; margin-top: 15px; color: #ff9800; text-decoration: none; font-size: 0.9rem;">
+            Ver todas <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+</div>
+
+<!-- Alertas de Stock -->
+{% if productos_bajo_stock > 0 %}
+<div style="background-color: #fff3cd; color: #856404; padding: 20px; border-radius: 8px; margin-bottom: 30px; border-left: 5px solid #ff9800;">
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <i class="fas fa-exclamation-triangle" style="font-size: 2rem;"></i>
+        <div>
+            <h3 style="margin: 0 0 5px 0;">Alerta de Inventario</h3>
+            <p style="margin: 0;">Hay <strong>{{ productos_bajo_stock }}</strong> producto(s) con stock bajo o agotado. 
+                <a href="{% url 'producto_list' %}" style="color: #856404; text-decoration: underline;">Ver productos</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Accesos Rápidos -->
+<div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+    <h2 style="margin-bottom: 20px; color: var(--text-dark);">Accesos Rápidos</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+        <a href="{% url 'producto_create' %}" class="btn btn-primary" style="text-align: center; padding: 15px;">
+            <i class="fas fa-plus-circle"></i> Nuevo Producto
+        </a>
+        <a href="{% url 'cliente_create' %}" class="btn btn-outline" style="text-align: center; padding: 15px;">
+            <i class="fas fa-user-plus"></i> Nuevo Cliente
+        </a>
+        <a href="{% url 'proveedor_create' %}" class="btn btn-outline" style="text-align: center; padding: 15px;">
+            <i class="fas fa-truck"></i> Nuevo Proveedor
+        </a>
+        <a href="{% url 'marca_create' %}" class="btn btn-outline" style="text-align: center; padding: 15px;">
+            <i class="fas fa-tag"></i> Nueva Marca
+        </a>
+    </div>
+</div>
+
+<!-- Información del Sistema -->
+<div style="margin-top: 30px; padding: 20px; background: #f9f9f9; border-radius: 8px; text-align: center;">
+    <p style="color: #666; margin: 0;">
+        <i class="fas fa-info-circle"></i> Sistema de Gestión Movilnet - MVP v1.0
+    </p>
+</div>
+{% endblock %}

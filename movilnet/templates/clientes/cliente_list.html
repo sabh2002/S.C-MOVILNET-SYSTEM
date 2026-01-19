@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}Listado de Clientes - Movilnet System{% endblock %}
+
+{% block content %}
+<div class="header-section" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <h1 class="header-title">Listado de Clientes</h1>
+    <a href="{% url 'cliente_create' %}" class="btn btn-primary">+ Agregar Cliente</a>
+</div>
+
+<!-- Barra de búsqueda -->
+<div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+    <form method="get" style="display: flex; gap: 10px;">
+        <input type="text" name="search" class="form-control" placeholder="Buscar por nombre, cédula o teléfono..." 
+               value="{{ request.GET.search }}" style="flex: 1;">
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-search"></i> Buscar
+        </button>
+        {% if request.GET.search %}
+        <a href="{% url 'cliente_list' %}" class="btn btn-secondary">
+            <i class="fas fa-times"></i> Limpiar
+        </a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Estadísticas -->
+<div style="display: flex; gap: 20px; margin-bottom: 30px;">
+    <div style="background: white; padding: 20px; border-radius: 8px; flex: 1; border-left: 5px solid var(--primary-color); box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+        <h3>Total Clientes</h3>
+        <p style="font-size: 2rem; font-weight: bold;">{{ page_obj.paginator.count }}</p>
+    </div>
+</div>
+
+<!-- Tabla de clientes -->
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Cédula</th>
+                <th>Teléfono</th>
+                <th>Dirección</th>
+                <th>Fecha de Registro</th>
+                <th>Opciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cliente in clientes %}
+            <tr>
+                <td>{{ cliente.id }}</td>
+                <td>{{ cliente.nombre }}</td>
+                <td>{{ cliente.cedula }}</td>
+                <td>{{ cliente.telefono }}</td>
+                <td>{{ cliente.direccion|default:"N/A"|truncatewords:5 }}</td>
+                <td>{{ cliente.fecha_registro|date:"d/m/Y" }}</td>
+                <td>
+                    <a href="{% url 'cliente_update' cliente.pk %}" title="Editar">
+                        <i class="fas fa-edit action-icon" style="color: #2196F3;"></i>
+                    </a>
+                    <a href="{% url 'cliente_delete' cliente.pk %}" title="Eliminar">
+                        <i class="fas fa-trash action-icon" style="color: #F44336;"></i>
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 40px;">
+                    <i class="fas fa-inbox" style="font-size: 3rem; color: #ccc;"></i>
+                    <p style="margin-top: 10px; color: #666;">No hay clientes registrados</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Paginación -->
+{% if is_paginated %}
+<div style="margin-top: 20px; text-align: center;">
+    <div style="display: inline-flex; gap: 5px;">
+        {% if page_obj.has_previous %}
+            <a href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
+               class="btn btn-outline">Primera</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
+               class="btn btn-outline">Anterior</a>
+        {% endif %}
+        
+        <span style="padding: 10px 20px; background: white; border-radius: 4px;">
+            Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+        </span>
+        
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
+               class="btn btn-outline">Siguiente</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
+               class="btn btn-outline">Última</a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

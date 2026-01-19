@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body>
+
+    <div class="admin-wrapper">
+        <nav class="sidebar">
+            <div class="brand-logo">
+                <i class="fas fa-signal"></i> movilnet
+            </div>
+            <ul class="menu-list">
+                <li><a href="#"><i class="fas fa-home"></i> Inicio</a></li>
+                <li><a href="#"><i class="fas fa-users-cog"></i> Administrador</a></li>
+                <li><a href="#"><i class="fas fa-user"></i> Usuarios</a></li>
+                <li><a href="#"><i class="fas fa-tags"></i> Marcas</a></li>
+                <li><a href="#" class="active"><i class="fas fa-mobile-alt"></i> Productos</a></li>
+                <li><a href="#"><i class="fas fa-truck"></i> Proveedores</a></li>
+                <li><a href="#"><i class="fas fa-users"></i> Clientes</a></li>
+                <li><a href="#" style="color: var(--danger);"><i class="fas fa-sign-out-alt"></i> Salir</a></li>
+            </ul>
+        </nav>
+
+        <main class="main-content">
+
+            <div class="header-section" style="display: flex; justify-content: space-between; align-items: center;">
+                <h1 class="header-title">Listado de Productos</h1>
+                <button class="btn btn-primary">+ Agregar Producto</button>
+            </div>
+
+            <div style="display: flex; gap: 20px; margin-bottom: 30px;">
+                <div
+                    style="background: white; padding: 20px; border-radius: 8px; flex: 1; border-left: 5px solid var(--primary-color); shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                    <h3>Productos</h3>
+                    <p style="font-size: 2rem; font-weight: bold;">20</p>
+                </div>
+                <div
+                    style="background: white; padding: 20px; border-radius: 8px; flex: 1; border-left: 5px solid #333;">
+                    <h3>Clientes</h3>
+                    <p style="font-size: 2rem; font-weight: bold;">130</p>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Tipo</th>
+                            <th>Marca</th>
+                            <th>Estado</th>
+                            <th>Precio</th>
+                            <th>Opciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>Smart 8</td>
+                            <td>Teléfono</td>
+                            <td>Infinix</td>
+                            <td><span class="status-active">Activo</span></td>
+                            <td>120 $</td>
+                            <td>
+                                <i class="fas fa-edit action-icon" style="color: #2196F3;"></i>
+                                <i class="fas fa-trash action-icon" style="color: #F44336;"></i>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>Spark 30</td>
+                            <td>Teléfono</td>
+                            <td>Tecno</td>
+                            <td><span class="status-active">Activo</span></td>
+                            <td>115 $</td>
+                            <td>
+                                <i class="fas fa-edit action-icon" style="color: #2196F3;"></i>
+                                <i class="fas fa-trash action-icon" style="color: #F44336;"></i>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>Bold 5</td>
+                            <td>Teléfono</td>
+                            <td>Blackberry</td>
+                            <td><span class="status-inactive">Inactivo</span></td>
+                            <td>N/A</td>
+                            <td>
+                                <i class="fas fa-edit action-icon" style="color: #2196F3;"></i>
+                                <i class="fas fa-trash action-icon" style="color: #F44336;"></i>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <hr style="margin: 40px 0; border: 0; border-top: 1px solid #ddd;">
+
+            <h2 class="header-title">Agregar Producto (Ejemplo Imagen #6)</h2>
+            <div style="background: white; padding: 30px; border-radius: 8px;">
+                <form>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nombre del Producto</label>
+                            <input type="text" class="form-control" placeholder="Ej. Smart 8">
+                        </div>
+                        <div class="form-group">
+                            <label>Marca</label>
+                            <select class="form-control">
+                                <option>Infinix</option>
+                                <option>Tecno</option>
+                                <option>Samsung</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo de Producto</label>
+                            <select class="form-control" id="tipoProducto">
+                                <option value="telefono">Teléfono</option>
+                                <option value="router">Router/Modem</option>
+                                <option value="forro">Forro</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Precio ($)</label>
+                            <input type="number" class="form-control" placeholder="0.00">
+                        </div>
+                    </div>
+
+                    <div style="background: #f9f9f9; padding: 20px; border-radius: 5px; margin-top: 20px;">
+                        <h4 style="margin-bottom: 15px; color: var(--primary-color);">Especificaciones Técnicas</h4>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Memoria RAM</label>
+                                <select class="form-control">
+                                    <option>4 GB</option>
+                                    <option>8 GB</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Almacenamiento</label>
+                                <select class="form-control">
+                                    <option>64 GB</option>
+                                    <option>128 GB</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Batería (mAh)</label>
+                                <input type="text" class="form-control" placeholder="5000 mAh">
+                            </div>
+                            <div class="form-group">
+                                <label>Cámara (Mpx)</label>
+                                <input type="text" class="form-control" placeholder="50 MP">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 30px; display: flex; gap: 10px;">
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                        <button type="button" class="btn btn-secondary">Limpiar</button>
+                        <button type="button" class="btn btn-outline">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+
+        </main>
+    </div>
+
+</body>
+
+</html>

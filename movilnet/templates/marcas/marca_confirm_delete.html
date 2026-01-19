@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar Marca - Movilnet System{% endblock %}
+
+{% block content %}
+<div class="header-section" style="margin-bottom: 30px;">
+    <h1 class="header-title">Eliminar Marca</h1>
+</div>
+
+<div style="background: white; padding: 30px; border-radius: 8px; max-width: 600px;">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <i class="fas fa-exclamation-triangle" style="font-size: 4rem; color: #F44336;"></i>
+    </div>
+    
+    <h2 style="text-align: center; margin-bottom: 20px;">¿Está seguro que desea eliminar esta marca?</h2>
+    
+    <div style="background: #f9f9f9; padding: 20px; border-radius: 5px; margin-bottom: 30px;">
+        <p><strong>Marca:</strong> {{ object.nombre_marca }}</p>
+        <p><strong>Estado:</strong> 
+            {% if object.estado %}
+                <span class="status-active">Activo</span>
+            {% else %}
+                <span class="status-inactive">Inactivo</span>
+            {% endif %}
+        </p>
+        <p><strong>Fecha de Registro:</strong> {{ object.fecha_registro|date:"d/m/Y H:i" }}</p>
+    </div>
+    
+    <div style="background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #ffeaa7;">
+        <i class="fas fa-info-circle"></i> <strong>Advertencia:</strong> Esta acción no se puede deshacer. 
+        {% if object.productos.count > 0 %}
+        <br><br>
+        <i class="fas fa-exclamation-circle"></i> Esta marca tiene <strong>{{ object.productos.count }} producto(s)</strong> asociado(s) y no podrá ser eliminada.
+        {% endif %}
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            {% if object.productos.count == 0 %}
+            <button type="submit" class="btn btn-primary" style="background-color: #F44336;">
+                <i class="fas fa-trash"></i> Sí, Eliminar
+            </button>
+            {% endif %}
+            <a href="{% url 'marca_list' %}" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
