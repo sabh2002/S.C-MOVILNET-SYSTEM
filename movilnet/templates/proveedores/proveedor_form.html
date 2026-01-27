@@ -29,14 +29,24 @@
             </div>
             
             <div class="form-group">
-                <label for="{{ form.rif.id_for_label }}">{{ form.rif.label }} *</label>
-                {{ form.rif }}
-                {% if form.rif.help_text %}
-                    <small style="color: #666; font-size: 0.875rem;">{{ form.rif.help_text }}</small>
-                {% endif %}
-                {% if form.rif.errors %}
+                <label>RIF *</label>
+                <div style="display: flex; gap: 10px;">
+                    <div style="width: 140px;">
+                        {{ form.tipo_rif }}
+                    </div>
+                    <div style="flex: 1;">
+                        {{ form.numero_rif }}
+                    </div>
+                </div>
+                <small style="color: #666; font-size: 0.875rem;">Seleccione el tipo y escriba los 10 dígitos</small>
+                {% if form.tipo_rif.errors %}
                     <div style="color: #dc3545; font-size: 0.875rem; margin-top: 5px;">
-                        {{ form.rif.errors }}
+                        {{ form.tipo_rif.errors }}
+                    </div>
+                {% endif %}
+                {% if form.numero_rif.errors %}
+                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 5px;">
+                        {{ form.numero_rif.errors }}
                     </div>
                 {% endif %}
             </div>
