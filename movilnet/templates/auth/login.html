@@ -1,0 +1,68 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Movilnet System</title>
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-logo">
+            <i class="fas fa-signal"></i> movilnet
+        </div>
+        <h3 style="text-align:center; color: var(--text-gray); margin-bottom: 24px; font-size: 1rem; font-weight: normal;">
+            Sistema de Control de Inventario
+        </h3>
+
+        {% if form.non_field_errors %}
+            <div style="background-color: #f8d7da; color: #721c24; padding: 12px 15px; border-radius: 5px;
+                        margin-bottom: 16px; border: 1px solid #f5c6cb; font-size: 0.875rem;">
+                <i class="fas fa-exclamation-circle"></i> {{ form.non_field_errors.0 }}
+            </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label style="display:block; margin-bottom: 6px; color: var(--text-dark); font-size: 0.9rem;">
+                    <i class="fas fa-user"></i> Usuario
+                </label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <div style="color: #dc3545; font-size: 0.8rem; margin-top: 4px;">{{ form.username.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group" style="margin-bottom: 8px;">
+                <label style="display:block; margin-bottom: 6px; color: var(--text-dark); font-size: 0.9rem;">
+                    <i class="fas fa-lock"></i> Contraseña
+                </label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                    <div style="color: #dc3545; font-size: 0.8rem; margin-top: 4px;">{{ form.password.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 24px;">
+                <button type="reset" class="btn btn-secondary">
+                    <i class="fas fa-eraser"></i> Limpiar
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt"></i> Ingresar
+                </button>
+            </div>
+        </form>
+
+        <div style="margin-top: 20px; font-size: 0.875rem; text-align: center; border-top: 1px solid var(--border-color); padding-top: 16px;">
+            <a href="{% url 'recuperar_password' %}" style="color: var(--text-gray);">
+                <i class="fas fa-key"></i> Recuperar contraseña
+            </a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

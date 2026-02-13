@@ -29,14 +29,24 @@
             </div>
             
             <div class="form-group">
-                <label for="{{ form.cedula.id_for_label }}">{{ form.cedula.label }} *</label>
-                {{ form.cedula }}
-                {% if form.cedula.help_text %}
-                    <small style="color: #666; font-size: 0.875rem;">{{ form.cedula.help_text }}</small>
-                {% endif %}
-                {% if form.cedula.errors %}
+                <label>Cédula *</label>
+                <div style="display: flex; gap: 10px;">
+                    <div style="width: 140px;">
+                        {{ form.tipo_cedula }}
+                    </div>
+                    <div style="flex: 1;">
+                        {{ form.numero_cedula }}
+                    </div>
+                </div>
+                <small style="color: #666; font-size: 0.875rem;">Seleccione el tipo y escriba entre 6 y 8 dígitos</small>
+                {% if form.tipo_cedula.errors %}
                     <div style="color: #dc3545; font-size: 0.875rem; margin-top: 5px;">
-                        {{ form.cedula.errors }}
+                        {{ form.tipo_cedula.errors }}
+                    </div>
+                {% endif %}
+                {% if form.numero_cedula.errors %}
+                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 5px;">
+                        {{ form.numero_cedula.errors }}
                     </div>
                 {% endif %}
             </div>

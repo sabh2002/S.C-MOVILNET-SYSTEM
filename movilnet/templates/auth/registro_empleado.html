@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Registrar Empleado - Movilnet System{% endblock %}
+
+{% block content %}
+<div class="header-section" style="margin-bottom: 30px;">
+    <h1 class="header-title"><i class="fas fa-user-plus"></i> Registrar Nuevo Empleado</h1>
+</div>
+
+<div style="background: white; padding: 30px; border-radius: 8px;">
+    {% if form.non_field_errors %}
+        <div style="background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px;
+                    margin-bottom: 20px; border: 1px solid #f5c6cb;">
+            {{ form.non_field_errors }}
+        </div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+
+        <h3 style="color: var(--text-gray); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;
+                   margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--primary-color);">
+            Datos de acceso
+        </h3>
+
+        <div class="form-grid" style="margin-bottom: 24px;">
+            <div class="form-group">
+                <label style="display:block; margin-bottom: 6px; font-weight: 500;">
+                    {{ form.username.label }} *
+                </label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 4px;">{{ form.username.errors.0 }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label style="display:block; margin-bottom: 6px; font-weight: 500;">
+                    {{ form.first_name.label }} *
+                </label>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}
+                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 4px;">{{ form.first_name.errors.0 }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label style="display:block; margin-bottom: 6px; font-weight: 500;">
+                    {{ form.last_name.label }} *
+                </label>
+                {{ form.last_name }}
+                {% if form.last_name.errors %}
+                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 4px;">{{ form.last_name.errors.0 }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label style="display:block; margin-bottom: 6px; font-weight: 500;">
+                    {{ form.rol.label }} *
+                </label>
+                {{ form.rol }}
+                {% if form.rol.errors %}
+                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 4px;">{{ form.rol.errors.0 }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label style="display:block; margin-bottom: 6px; font-weight: 500;">
+                    {{ form.password.label }} *
+                </label>
+                {{ form.password }}
+                {% if form.password.errors %}
+                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 4px;">{{ form.password.errors.0 }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label style="display:block; margin-bottom: 6px; font-weight: 500;">
+                    {{ form.password_confirmar.label }} *
+                </label>
+                {{ form.password_confirmar }}
+                {% if form.password_confirmar.errors %}
+                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 4px;">{{ form.password_confirmar.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <h3 style="color: var(--text-gray); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;
+                   margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--primary-color);">
+            Preguntas de seguridad
+        </h3>
+        <p style="color: var(--text-gray); font-size: 0.875rem; margin-bottom: 16px;">
+            Estas respuestas se usarán para recuperar la contraseña.
+        </p>
+
+        <div class="form-grid" style="margin-bottom: 24px;">
+            <div class="form-group">
+                <label style="display:block; margin-bottom: 6px; font-weight: 500;">
+                    {{ form.animal_favorito.label }} *
+                </label>
+                {{ form.animal_favorito }}
+                {% if form.animal_favorito.errors %}
+                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 4px;">{{ form.animal_favorito.errors.0 }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label style="display:block; margin-bottom: 6px; font-weight: 500;">
+                    {{ form.color_favorito.label }} *
+                </label>
+                {{ form.color_favorito }}
+                {% if form.color_favorito.errors %}
+                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 4px;">{{ form.color_favorito.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Registrar empleado
+            </button>
+            <a href="{% url 'lista_empleados' %}" class="btn btn-outline">
+                <i class="fas fa-times"></i> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
