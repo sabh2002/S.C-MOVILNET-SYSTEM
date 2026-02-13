@@ -137,19 +137,45 @@ class Producto(models.Model):
     @property
     def necesita_reposicion(self):
         """Indica si el producto necesita reposición"""
-        return self.stock_actual <= self.stock_minimo
-    
+        return self.stock_actual < self.stock_minimo
+
+    @property
+    def umbral_bajo(self):
+        """Umbral para considerar stock como 'bajo' (20% sobre el mínimo)"""
+        return self.stock_minimo + max(1, int(self.stock_minimo * 0.2))
+
+    @property
+    def umbral_cerca_maximo(self):
+        """Umbral para considerar stock 'cerca del máximo' (90% del máximo)"""
+        return int(self.stock_maximo * 0.9)
+
     @property
     def estado_stock(self):
-        """Retorna el estado del stock"""
+        """Retorna el estado del stock con descripciones detalladas"""
         if self.stock_actual == 0:
             return "Sin Stock"
-        elif self.stock_actual <= self.stock_minimo:
+        elif self.stock_actual < self.stock_minimo:
+            return "Agotándose"
+        elif self.stock_actual <= self.umbral_bajo:
             return "Stock Bajo"
         elif self.stock_actual >= self.stock_maximo:
-            return "Stock Completo"
+            return "Stock Máximo"
+        elif self.stock_actual >= self.umbral_cerca_maximo:
+            return "Cerca del Máximo"
         else:
             return "Stock Normal"
+
+    @property
+    def css_estado_stock(self):
+        """Retorna clase CSS según el estado del stock"""
+        estado = self.estado_stock
+        if estado in ("Sin Stock", "Agotándose"):
+            return "danger"
+        elif estado == "Stock Bajo":
+            return "warning"
+        elif estado in ("Cerca del Máximo", "Stock Máximo"):
+            return "info"
+        return "success"
 
 
 class PerfilEmpleado(models.Model):
