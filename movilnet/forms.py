@@ -93,15 +93,77 @@ class ProveedorForm(forms.ModelForm):
 
 
 class ClienteForm(forms.ModelForm):
+    TIPO_CEDULA_CHOICES = [
+        ('V', 'V - Venezolano'),
+        ('E', 'E - Extranjero'),
+        ('J', 'J - Jurídico'),
+        ('P', 'P - Pasaporte'),
+        ('G', 'G - Gobierno'),
+    ]
+
+    tipo_cedula = forms.ChoiceField(
+        choices=TIPO_CEDULA_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label='Tipo'
+    )
+    numero_cedula = forms.CharField(
+        max_length=8,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Ej. 12345678',
+            'maxlength': '8'
+        }),
+        label='Número de Cédula'
+    )
+
     class Meta:
         model = Cliente
-        fields = ['nombre', 'cedula', 'telefono', 'direccion']
+        fields = ['nombre', 'telefono', 'direccion']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Juan Pérez'}),
-            'cedula': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. V-12345678'}),
             'telefono': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. 0424-1234567'}),
             'direccion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Dirección completa'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk and self.instance.cedula:
+            cedula_parts = self.instance.cedula.split('-')
+            if len(cedula_parts) == 2:
+                self.fields['tipo_cedula'].initial = cedula_parts[0]
+                self.fields['numero_cedula'].initial = cedula_parts[1]
+
+    def clean_numero_cedula(self):
+        numero = self.cleaned_data.get('numero_cedula', '')
+        if not numero.isdigit():
+            raise forms.ValidationError('El número de cédula debe contener solo dígitos.')
+        if len(numero) < 6 or len(numero) > 8:
+            raise forms.ValidationError('El número de cédula debe tener entre 6 y 8 dígitos.')
+        return numero
+
+    def clean(self):
+        cleaned_data = super().clean()
+        tipo = cleaned_data.get('tipo_cedula')
+        numero = cleaned_data.get('numero_cedula')
+
+        if tipo and numero:
+            cedula_completa = f"{tipo}-{numero}"
+            cleaned_data['cedula'] = cedula_completa
+
+            existing = Cliente.objects.filter(cedula=cedula_completa)
+            if self.instance and self.instance.pk:
+                existing = existing.exclude(pk=self.instance.pk)
+            if existing.exists():
+                raise forms.ValidationError({'numero_cedula': 'Ya existe un cliente con esta cédula.'})
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.cedula = self.cleaned_data.get('cedula')
+        if commit:
+            instance.save()
+        return instance
 
 
 class ProductoForm(forms.ModelForm):
