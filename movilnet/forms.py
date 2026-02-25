@@ -1,7 +1,12 @@
 from django import forms
+from django.forms import inlineformset_factory
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
-from .models import Marca, Proveedor, Cliente, Producto, PerfilEmpleado
+from .models import (
+    Marca, Proveedor, Cliente, Producto, PerfilEmpleado,
+    TipoInventario, MovimientoInventario, Cotizacion, DetalleCotizacion,
+    OrdenCompra, DetalleOrdenCompra, NotaEntrega, DetalleNotaEntrega
+)
 
 
 class MarcaForm(forms.ModelForm):
@@ -355,3 +360,126 @@ class RegistroEmpleadoForm(forms.ModelForm):
         if commit:
             perfil.save()
         return perfil
+
+
+# ==================== FORMULARIOS DE INVENTARIO ====================
+
+class TipoInventarioForm(forms.ModelForm):
+    class Meta:
+        model = TipoInventario
+        fields = ['tipo_movimiento', 'categoria_movimiento']
+        widgets = {
+            'tipo_movimiento': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Entrada, Salida'}),
+            'categoria_movimiento': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Compra, Venta, Ajuste'}),
+        }
+
+
+class MovimientoInventarioForm(forms.ModelForm):
+    class Meta:
+        model = MovimientoInventario
+        fields = ['producto', 'tipo_inventario', 'cantidad', 'observaciones']
+        widgets = {
+            'producto': forms.Select(attrs={'class': 'form-control'}),
+            'tipo_inventario': forms.Select(attrs={'class': 'form-control'}),
+            'cantidad': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '1', 'min': '1'}),
+            'observaciones': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Observaciones del movimiento'}),
+        }
+
+
+# ==================== FORMULARIOS DE COTIZACIÓN ====================
+
+class CotizacionForm(forms.ModelForm):
+    class Meta:
+        model = Cotizacion
+        fields = ['proveedor', 'fecha_cotizacion', 'validez_dias', 'estado', 'observaciones']
+        widgets = {
+            'proveedor': forms.Select(attrs={'class': 'form-control'}),
+            'fecha_cotizacion': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'validez_dias': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '30', 'min': '1'}),
+            'estado': forms.Select(attrs={'class': 'form-control'}),
+            'observaciones': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Observaciones'}),
+        }
+
+
+class DetalleCotizacionForm(forms.ModelForm):
+    class Meta:
+        model = DetalleCotizacion
+        fields = ['producto', 'cantidad']
+        widgets = {
+            'producto': forms.Select(attrs={'class': 'form-control'}),
+            'cantidad': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}),
+        }
+
+
+DetalleCotizacionFormSet = inlineformset_factory(
+    Cotizacion, DetalleCotizacion,
+    form=DetalleCotizacionForm,
+    extra=1,
+    can_delete=True
+)
+
+
+# ==================== FORMULARIOS DE ORDEN DE COMPRA ====================
+
+class OrdenCompraForm(forms.ModelForm):
+    class Meta:
+        model = OrdenCompra
+        fields = ['cotizacion', 'numero_orden', 'fecha_orden']
+        widgets = {
+            'cotizacion': forms.Select(attrs={'class': 'form-control'}),
+            'numero_orden': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. OC-001'}),
+            'fecha_orden': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        }
+
+
+class DetalleOrdenCompraForm(forms.ModelForm):
+    class Meta:
+        model = DetalleOrdenCompra
+        fields = ['producto', 'cantidad_solicitada', 'cantidad_recibida']
+        widgets = {
+            'producto': forms.Select(attrs={'class': 'form-control'}),
+            'cantidad_solicitada': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}),
+            'cantidad_recibida': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
+        }
+
+
+DetalleOrdenCompraFormSet = inlineformset_factory(
+    OrdenCompra, DetalleOrdenCompra,
+    form=DetalleOrdenCompraForm,
+    extra=1,
+    can_delete=True
+)
+
+
+# ==================== FORMULARIOS DE NOTA DE ENTREGA ====================
+
+class NotaEntregaForm(forms.ModelForm):
+    class Meta:
+        model = NotaEntrega
+        fields = ['cliente', 'numero_entrega', 'descuento', 'observaciones']
+        widgets = {
+            'cliente': forms.Select(attrs={'class': 'form-control'}),
+            'numero_entrega': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. NE-001'}),
+            'descuento': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'observaciones': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Observaciones'}),
+        }
+
+
+class DetalleNotaEntregaForm(forms.ModelForm):
+    class Meta:
+        model = DetalleNotaEntrega
+        fields = ['producto', 'cantidad', 'precio_unitario', 'descuento']
+        widgets = {
+            'producto': forms.Select(attrs={'class': 'form-control'}),
+            'cantidad': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}),
+            'precio_unitario': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'descuento': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+        }
+
+
+DetalleNotaEntregaFormSet = inlineformset_factory(
+    NotaEntrega, DetalleNotaEntrega,
+    form=DetalleNotaEntregaForm,
+    extra=1,
+    can_delete=True
+)

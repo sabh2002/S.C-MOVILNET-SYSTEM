@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Notas de Entrega - Movilnet System{% endblock %}
+
+{% block content %}
+<div class="header-section" style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
+    <h1 class="header-title"><i class="fas fa-file-alt"></i> Notas de Entrega</h1>
+    <a href="{% url 'nota_entrega_create' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Nueva Nota
+    </a>
+</div>
+
+<div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+    <form method="get" style="display: flex; gap: 10px;">
+        <input type="text" name="search" class="form-control" placeholder="Buscar por cliente o número..."
+               value="{{ request.GET.search }}" style="max-width: 300px;">
+        <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i></button>
+    </form>
+</div>
+
+<div style="background: white; padding: 20px; border-radius: 8px;">
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: var(--bg-light); border-bottom: 2px solid var(--border-color);">
+                <th style="padding: 12px 16px; text-align: left;">Número</th>
+                <th style="padding: 12px 16px; text-align: left;">Cliente</th>
+                <th style="padding: 12px 16px; text-align: right;">Subtotal</th>
+                <th style="padding: 12px 16px; text-align: right;">Descuento</th>
+                <th style="padding: 12px 16px; text-align: right;">Total</th>
+                <th style="padding: 12px 16px; text-align: left;">Fecha</th>
+                <th style="padding: 12px 16px; text-align: center;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for nota in notas %}
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 12px 16px; font-weight: 500;">{{ nota.numero_entrega }}</td>
+                <td style="padding: 12px 16px;">{{ nota.cliente.nombre }}</td>
+                <td style="padding: 12px 16px; text-align: right;">${{ nota.subtotal }}</td>
+                <td style="padding: 12px 16px; text-align: right;">${{ nota.descuento }}</td>
+                <td style="padding: 12px 16px; text-align: right; font-weight: bold;">${{ nota.total }}</td>
+                <td style="padding: 12px 16px;">{{ nota.fecha_registro|date:"d/m/Y" }}</td>
+                <td style="padding: 12px 16px; text-align: center;">
+                    <a href="{% url 'nota_entrega_detail' nota.pk %}" style="color: #17a2b8; margin-right: 8px;"><i class="fas fa-eye"></i></a>
+                    <a href="{% url 'nota_entrega_update' nota.pk %}" style="color: #007bff; margin-right: 8px;"><i class="fas fa-edit"></i></a>
+                    <a href="{% url 'nota_entrega_delete' nota.pk %}" style="color: #dc3545;"><i class="fas fa-trash"></i></a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="padding: 30px; text-align: center; color: var(--text-gray);">
+                    No hay notas de entrega registradas.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Editar{% else %}Nueva{% endif %} Cotización - Movilnet System{% endblock %}
+
+{% block content %}
+<div class="header-section" style="margin-bottom: 30px;">
+    <h1 class="header-title">{% if object %}Editar{% else %}Nueva{% endif %} Cotización</h1>
+</div>
+
+<div style="background: white; padding: 30px; border-radius: 8px;">
+    <form method="post">
+        {% csrf_token %}
+
+        <h3 style="color: var(--text-gray); font-size: 0.9rem; text-transform: uppercase; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--primary-color);">
+            Datos de la Cotización
+        </h3>
+
+        <div class="form-grid">
+            <div class="form-group" style="margin-bottom: 18px;">
+                <label style="display:block; margin-bottom: 6px; font-weight: 500;">Proveedor *</label>
+                {{ form.proveedor }}
+            </div>
+            <div class="form-group" style="margin-bottom: 18px;">
+                <label style="display:block; margin-bottom: 6px; font-weight: 500;">Fecha Cotización *</label>
+                {{ form.fecha_cotizacion }}
+            </div>
+            <div class="form-group" style="margin-bottom: 18px;">
+                <label style="display:block; margin-bottom: 6px; font-weight: 500;">Validez (días) *</label>
+                {{ form.validez_dias }}
+            </div>
+            <div class="form-group" style="margin-bottom: 18px;">
+                <label style="display:block; margin-bottom: 6px; font-weight: 500;">Estado</label>
+                {{ form.estado }}
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 24px;">
+            <label style="display:block; margin-bottom: 6px; font-weight: 500;">Observaciones</label>
+            {{ form.observaciones }}
+        </div>
+
+        <h3 style="color: var(--text-gray); font-size: 0.9rem; text-transform: uppercase; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--primary-color);">
+            Productos
+        </h3>
+
+        {{ detalles.management_form }}
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <thead>
+                <tr style="background-color: var(--bg-light);">
+                    <th style="padding: 10px; text-align: left;">Producto</th>
+                    <th style="padding: 10px; text-align: center; width: 120px;">Cantidad</th>
+                    <th style="padding: 10px; text-align: center; width: 80px;">Eliminar</th>
+                </tr>
+            </thead>
+            <tbody id="detalles-body">
+                {% for detalle in detalles %}
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 10px;">
+                        {{ detalle.id }}
+                        {{ detalle.producto }}
+                    </td>
+                    <td style="padding: 10px; text-align: center;">{{ detalle.cantidad }}</td>
+                    <td style="padding: 10px; text-align: center;">{{ detalle.DELETE }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar</button>
+            <a href="{% url 'cotizacion_list' %}" class="btn btn-outline"><i class="fas fa-times"></i> Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

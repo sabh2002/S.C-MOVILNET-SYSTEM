@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Movimientos de Inventario - Movilnet System{% endblock %}
+
+{% block content %}
+<div class="header-section" style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
+    <h1 class="header-title"><i class="fas fa-exchange-alt"></i> Movimientos de Inventario</h1>
+    <a href="{% url 'movimiento_create' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Nuevo Movimiento
+    </a>
+</div>
+
+<div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+    <form method="get" style="display: flex; gap: 10px;">
+        <input type="text" name="search" class="form-control" placeholder="Buscar por producto o tipo..."
+               value="{{ request.GET.search }}" style="max-width: 300px;">
+        <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i></button>
+    </form>
+</div>
+
+<div style="background: white; padding: 20px; border-radius: 8px;">
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: var(--bg-light); border-bottom: 2px solid var(--border-color);">
+                <th style="padding: 12px 16px; text-align: left;">Fecha</th>
+                <th style="padding: 12px 16px; text-align: left;">Producto</th>
+                <th style="padding: 12px 16px; text-align: left;">Tipo</th>
+                <th style="padding: 12px 16px; text-align: center;">Cantidad</th>
+                <th style="padding: 12px 16px; text-align: left;">Empleado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for mov in movimientos %}
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 12px 16px; color: var(--text-gray);">{{ mov.fecha_movimiento|date:"d/m/Y H:i" }}</td>
+                <td style="padding: 12px 16px; font-weight: 500;">{{ mov.producto.nombre }}</td>
+                <td style="padding: 12px 16px;">
+                    <span style="padding: 3px 10px; border-radius: 20px; font-size: 0.8rem;
+                        {% if 'entrada' in mov.tipo_inventario.tipo_movimiento|lower or 'compra' in mov.tipo_inventario.tipo_movimiento|lower %}
+                            background-color: #d4edda; color: #155724;
+                        {% else %}
+                            background-color: #f8d7da; color: #721c24;
+                        {% endif %}">
+                        {{ mov.tipo_inventario.tipo_movimiento }}
+                    </span>
+                </td>
+                <td style="padding: 12px 16px; text-align: center; font-weight: bold;">{{ mov.cantidad }}</td>
+                <td style="padding: 12px 16px;">{{ mov.empleado.user.username|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="padding: 30px; text-align: center; color: var(--text-gray);">
+                    No hay movimientos registrados.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if is_paginated %}
+    <div style="margin-top: 20px; display: flex; justify-content: center; gap: 10px;">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-outline">Anterior</a>
+        {% endif %}
+        <span style="padding: 10px;">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="btn btn-outline">Siguiente</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
