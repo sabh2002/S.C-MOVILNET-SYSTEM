@@ -3,49 +3,72 @@
 {% block title %}Eliminar Marca - Movilnet System{% endblock %}
 
 {% block content %}
-<div class="header-section" style="margin-bottom: 30px;">
-    <h1 class="header-title">Eliminar Marca</h1>
+<!-- Page Header -->
+<div class="page-header">
+    <div class="page-header-left">
+        <div class="breadcrumb">
+            <a href="{% url 'dashboard' %}"><i class="fas fa-home"></i></a>
+            <span>/</span>
+            <a href="{% url 'marca_list' %}">Marcas</a>
+            <span>/</span>
+            <span>Eliminar</span>
+        </div>
+        <h1 class="page-title">Eliminar Marca</h1>
+    </div>
 </div>
 
-<div style="background: white; padding: 30px; border-radius: 8px; max-width: 600px;">
-    <div style="text-align: center; margin-bottom: 30px;">
-        <i class="fas fa-exclamation-triangle" style="font-size: 4rem; color: #F44336;"></i>
-    </div>
-    
-    <h2 style="text-align: center; margin-bottom: 20px;">¿Está seguro que desea eliminar esta marca?</h2>
-    
-    <div style="background: #f9f9f9; padding: 20px; border-radius: 5px; margin-bottom: 30px;">
-        <p><strong>Marca:</strong> {{ object.nombre_marca }}</p>
-        <p><strong>Estado:</strong> 
-            {% if object.estado %}
-                <span class="status-active">Activo</span>
-            {% else %}
-                <span class="status-inactive">Inactivo</span>
-            {% endif %}
-        </p>
-        <p><strong>Fecha de Registro:</strong> {{ object.fecha_registro|date:"d/m/Y H:i" }}</p>
-    </div>
-    
-    <div style="background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #ffeaa7;">
-        <i class="fas fa-info-circle"></i> <strong>Advertencia:</strong> Esta acción no se puede deshacer. 
-        {% if object.productos.count > 0 %}
-        <br><br>
-        <i class="fas fa-exclamation-circle"></i> Esta marca tiene <strong>{{ object.productos.count }} producto(s)</strong> asociado(s) y no podrá ser eliminada.
-        {% endif %}
-    </div>
-    
-    <form method="post">
-        {% csrf_token %}
-        <div style="display: flex; gap: 10px; justify-content: center;">
-            {% if object.productos.count == 0 %}
-            <button type="submit" class="btn btn-primary" style="background-color: #F44336;">
-                <i class="fas fa-trash"></i> Sí, Eliminar
-            </button>
-            {% endif %}
-            <a href="{% url 'marca_list' %}" class="btn btn-outline">
-                <i class="fas fa-arrow-left"></i> Cancelar
-            </a>
+<!-- Delete Card -->
+<div class="card animate-slide-up" style="max-width: 600px;">
+    <div class="card-body" style="text-align: center;">
+        <div style="width: 80px; height: 80px; background: var(--danger-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 2.5rem; color: var(--danger);"></i>
         </div>
-    </form>
+
+        <h2 style="font-size: 1.5rem; margin-bottom: 8px;">¿Eliminar esta marca?</h2>
+        <p style="color: var(--text-gray); margin-bottom: 24px;">Esta acción no se puede deshacer</p>
+
+        <!-- Brand Info -->
+        <div style="background: var(--bg-light); padding: 20px; border-radius: var(--radius-sm); text-align: left; margin-bottom: 24px;">
+            <div style="display: grid; gap: 12px;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-gray);">Marca:</span>
+                    <strong>{{ object.nombre_marca }}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-gray);">Estado:</span>
+                    {% if object.estado %}
+                        <span class="badge badge-success">Activo</span>
+                    {% else %}
+                        <span class="badge badge-secondary">Inactivo</span>
+                    {% endif %}
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-gray);">Registrada:</span>
+                    <span>{{ object.fecha_registro|date:"d/m/Y H:i" }}</span>
+                </div>
+            </div>
+        </div>
+
+        {% if object.productos.count > 0 %}
+        <div class="alert alert-warning" style="text-align: left; margin-bottom: 24px;">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>Esta marca tiene <strong>{{ object.productos.count }} producto(s)</strong> asociado(s) y no puede ser eliminada.</span>
+        </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <a href="{% url 'marca_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Cancelar
+                </a>
+                {% if object.productos.count == 0 %}
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> Sí, Eliminar
+                </button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}

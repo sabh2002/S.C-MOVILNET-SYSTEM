@@ -5,61 +5,63 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión - Movilnet System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'style.css' %}">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
 <div class="login-container">
-    <div class="login-card">
+    <div class="login-card animate-slide-up">
         <div class="login-logo">
-            <i class="fas fa-signal"></i> movilnet
+            <i class="fas fa-signal"></i>
+            <span>movilnet</span>
         </div>
-        <h3 style="text-align:center; color: var(--text-gray); margin-bottom: 24px; font-size: 1rem; font-weight: normal;">
-            Sistema de Control de Inventario
-        </h3>
+        <p class="login-subtitle">Sistema de Control de Inventario</p>
 
         {% if form.non_field_errors %}
-            <div style="background-color: #f8d7da; color: #721c24; padding: 12px 15px; border-radius: 5px;
-                        margin-bottom: 16px; border: 1px solid #f5c6cb; font-size: 0.875rem;">
-                <i class="fas fa-exclamation-circle"></i> {{ form.non_field_errors.0 }}
+            <div class="alert alert-danger" style="text-align: left;">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>{{ form.non_field_errors.0 }}</span>
             </div>
         {% endif %}
 
         <form method="post">
             {% csrf_token %}
-            <div class="form-group" style="margin-bottom: 16px;">
-                <label style="display:block; margin-bottom: 6px; color: var(--text-dark); font-size: 0.9rem;">
-                    <i class="fas fa-user"></i> Usuario
+            <div class="form-group">
+                <label for="{{ form.username.id_for_label }}">
+                    <i class="fas fa-user" style="margin-right: 6px; color: var(--text-gray);"></i>Usuario
                 </label>
                 {{ form.username }}
                 {% if form.username.errors %}
-                    <div style="color: #dc3545; font-size: 0.8rem; margin-top: 4px;">{{ form.username.errors.0 }}</div>
+                    <div class="form-error">{{ form.username.errors.0 }}</div>
                 {% endif %}
             </div>
 
-            <div class="form-group" style="margin-bottom: 8px;">
-                <label style="display:block; margin-bottom: 6px; color: var(--text-dark); font-size: 0.9rem;">
-                    <i class="fas fa-lock"></i> Contraseña
+            <div class="form-group">
+                <label for="{{ form.password.id_for_label }}">
+                    <i class="fas fa-lock" style="margin-right: 6px; color: var(--text-gray);"></i>Contraseña
                 </label>
                 {{ form.password }}
                 {% if form.password.errors %}
-                    <div style="color: #dc3545; font-size: 0.8rem; margin-top: 4px;">{{ form.password.errors.0 }}</div>
+                    <div class="form-error">{{ form.password.errors.0 }}</div>
                 {% endif %}
             </div>
 
-            <div style="display: flex; justify-content: space-between; margin-top: 24px;">
-                <button type="reset" class="btn btn-secondary">
+            <div style="display: flex; gap: 12px; margin-top: 28px;">
+                <button type="reset" class="btn btn-secondary" style="flex: 1;">
                     <i class="fas fa-eraser"></i> Limpiar
                 </button>
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">
                     <i class="fas fa-sign-in-alt"></i> Ingresar
                 </button>
             </div>
         </form>
 
-        <div style="margin-top: 20px; font-size: 0.875rem; text-align: center; border-top: 1px solid var(--border-color); padding-top: 16px;">
-            <a href="{% url 'recuperar_password' %}" style="color: var(--text-gray);">
-                <i class="fas fa-key"></i> Recuperar contraseña
+        <div class="login-footer">
+            <a href="{% url 'recuperar_password' %}">
+                <i class="fas fa-key"></i> ¿Olvidaste tu contraseña?
             </a>
         </div>
     </div>

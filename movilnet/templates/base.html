@@ -6,36 +6,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Movilnet System{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'style.css' %}">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     {% block extra_css %}{% endblock %}
 </head>
 
 <body>
-
     <div class="admin-wrapper">
+        <!-- Sidebar -->
         <nav class="sidebar">
             <div class="brand-logo">
-                <i class="fas fa-signal"></i> movilnet
+                <i class="fas fa-signal"></i>
+                <span>movilnet</span>
             </div>
 
-            <!-- Información del usuario autenticado -->
+            <!-- User Profile -->
             {% if request.user.is_authenticated %}
-            <div style="padding: 12px 20px; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.15);">
-                <a href="{% url 'perfil' %}" style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
-                    <div style="width: 36px; height: 36px; border-radius: 50%; background-color: rgba(255,255,255,0.2);
-                                display: flex; align-items: center; justify-content: center; color: white; font-size: 1rem; flex-shrink: 0;">
+            <div class="user-profile">
+                <a href="{% url 'perfil' %}">
+                    <div class="user-avatar">
                         {{ request.user.username|first|upper }}
                     </div>
-                    <div style="overflow: hidden;">
-                        <p style="color: white; font-weight: 600; font-size: 0.875rem; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    <div class="user-info">
+                        <p class="user-name">
                             {% if request.user.first_name %}
                                 {{ request.user.first_name }} {{ request.user.last_name }}
                             {% else %}
                                 {{ request.user.username }}
                             {% endif %}
                         </p>
-                        <p style="color: rgba(255,255,255,0.7); font-size: 0.75rem; margin: 0;">
+                        <p class="user-role">
                             {% if request.user.perfil %}
                                 {{ request.user.perfil.get_rol_display }}
                             {% elif request.user.is_superuser %}
@@ -49,68 +52,129 @@
             </div>
             {% endif %}
 
+            <!-- Menu -->
             <ul class="menu-list">
-                <li><a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}><i class="fas fa-home"></i> Inicio</a></li>
+                <li>
+                    <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}>
+                        <i class="fas fa-home"></i>
+                        <span>Inicio</span>
+                    </a>
+                </li>
 
-                <!-- Catálogos -->
-                <li style="margin-top: 12px; padding: 8px 20px; color: rgba(255,255,255,0.5); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Catálogos</li>
-                <li><a href="{% url 'marca_list' %}" {% if 'marca' in request.path %}class="active"{% endif %}><i class="fas fa-tags"></i> Marcas</a></li>
-                <li><a href="{% url 'producto_list' %}" {% if 'producto' in request.path %}class="active"{% endif %}><i class="fas fa-mobile-alt"></i> Productos</a></li>
-                <li><a href="{% url 'proveedor_list' %}" {% if 'proveedor' in request.path %}class="active"{% endif %}><i class="fas fa-truck"></i> Proveedores</a></li>
-                <li><a href="{% url 'cliente_list' %}" {% if 'cliente' in request.path %}class="active"{% endif %}><i class="fas fa-users"></i> Clientes</a></li>
+                <!-- Catalogos -->
+                <li class="menu-section">Catálogos</li>
+                <li>
+                    <a href="{% url 'marca_list' %}" {% if 'marca' in request.path %}class="active"{% endif %}>
+                        <i class="fas fa-tags"></i>
+                        <span>Marcas</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'producto_list' %}" {% if 'producto' in request.path %}class="active"{% endif %}>
+                        <i class="fas fa-mobile-alt"></i>
+                        <span>Productos</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'proveedor_list' %}" {% if 'proveedor' in request.path %}class="active"{% endif %}>
+                        <i class="fas fa-truck"></i>
+                        <span>Proveedores</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'cliente_list' %}" {% if 'cliente' in request.path %}class="active"{% endif %}>
+                        <i class="fas fa-users"></i>
+                        <span>Clientes</span>
+                    </a>
+                </li>
 
                 <!-- Inventario -->
-                <li style="margin-top: 12px; padding: 8px 20px; color: rgba(255,255,255,0.5); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Inventario</li>
-                <li><a href="{% url 'movimiento_list' %}" {% if 'movimiento' in request.path %}class="active"{% endif %}><i class="fas fa-exchange-alt"></i> Movimientos</a></li>
-                <li><a href="{% url 'tipo_inventario_list' %}" {% if 'tipos' in request.path %}class="active"{% endif %}><i class="fas fa-layer-group"></i> Tipos Mov.</a></li>
+                <li class="menu-section">Inventario</li>
+                <li>
+                    <a href="{% url 'movimiento_list' %}" {% if 'movimiento' in request.path %}class="active"{% endif %}>
+                        <i class="fas fa-exchange-alt"></i>
+                        <span>Movimientos</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'tipo_inventario_list' %}" {% if 'tipos' in request.path %}class="active"{% endif %}>
+                        <i class="fas fa-layer-group"></i>
+                        <span>Tipos Mov.</span>
+                    </a>
+                </li>
 
                 <!-- Compras -->
-                <li style="margin-top: 12px; padding: 8px 20px; color: rgba(255,255,255,0.5); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Compras</li>
-                <li><a href="{% url 'cotizacion_list' %}" {% if 'cotizacion' in request.path %}class="active"{% endif %}><i class="fas fa-file-invoice-dollar"></i> Cotizaciones</a></li>
-                <li><a href="{% url 'orden_compra_list' %}" {% if 'ordenes-compra' in request.path %}class="active"{% endif %}><i class="fas fa-shopping-cart"></i> Órdenes Compra</a></li>
+                <li class="menu-section">Compras</li>
+                <li>
+                    <a href="{% url 'cotizacion_list' %}" {% if 'cotizacion' in request.path %}class="active"{% endif %}>
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        <span>Cotizaciones</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'orden_compra_list' %}" {% if 'ordenes-compra' in request.path %}class="active"{% endif %}>
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>Órdenes Compra</span>
+                    </a>
+                </li>
 
                 <!-- Ventas -->
-                <li style="margin-top: 12px; padding: 8px 20px; color: rgba(255,255,255,0.5); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Ventas</li>
-                <li><a href="{% url 'nota_entrega_list' %}" {% if 'notas-entrega' in request.path %}class="active"{% endif %}><i class="fas fa-file-alt"></i> Notas Entrega</a></li>
+                <li class="menu-section">Ventas</li>
+                <li>
+                    <a href="{% url 'nota_entrega_list' %}" {% if 'notas-entrega' in request.path %}class="active"{% endif %}>
+                        <i class="fas fa-file-alt"></i>
+                        <span>Notas Entrega</span>
+                    </a>
+                </li>
 
                 {% if request.user.is_authenticated %}
                     {% if request.user.perfil.rol == 'admin' or request.user.is_superuser %}
-                    <!-- Administración -->
-                    <li style="margin-top: 12px; padding: 8px 20px; color: rgba(255,255,255,0.5); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Admin</li>
+                    <!-- Admin -->
+                    <li class="menu-section">Administración</li>
                     <li>
                         <a href="{% url 'lista_empleados' %}" {% if 'empleados' in request.path %}class="active"{% endif %}>
-                            <i class="fas fa-users-cog"></i> Empleados
+                            <i class="fas fa-users-cog"></i>
+                            <span>Empleados</span>
                         </a>
                     </li>
                     {% endif %}
 
-                    <li style="margin-top: 12px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.15);">
+                    <!-- User Actions -->
+                    <li class="menu-section">Mi Cuenta</li>
+                    <li>
                         <a href="{% url 'perfil' %}" {% if request.resolver_match.url_name == 'perfil' %}class="active"{% endif %}>
-                            <i class="fas fa-user-circle"></i> Mi Perfil
+                            <i class="fas fa-user-circle"></i>
+                            <span>Mi Perfil</span>
                         </a>
                     </li>
                     <li>
-                        <a href="{% url 'logout' %}" style="color: #FF9999;">
-                            <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+                        <a href="{% url 'logout' %}" class="logout-link">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Cerrar Sesión</span>
                         </a>
                     </li>
                 {% endif %}
             </ul>
         </nav>
 
+        <!-- Main Content -->
         <main class="main-content">
+            <!-- Alerts -->
             {% if messages %}
-                <div style="margin-bottom: 20px;">
-                    {% for message in messages %}
-                        <div class="alert alert-{{ message.tags }}" style="padding: 15px; border-radius: 5px; margin-bottom: 10px;
-                            {% if message.tags == 'success' %}background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;
-                            {% elif message.tags == 'error' %}background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;
-                            {% elif message.tags == 'warning' %}background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7;
-                            {% else %}background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb;{% endif %}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                </div>
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} animate-slide-up">
+                        {% if message.tags == 'success' %}
+                            <i class="fas fa-check-circle"></i>
+                        {% elif message.tags == 'error' %}
+                            <i class="fas fa-exclamation-circle"></i>
+                        {% elif message.tags == 'warning' %}
+                            <i class="fas fa-exclamation-triangle"></i>
+                        {% else %}
+                            <i class="fas fa-info-circle"></i>
+                        {% endif %}
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
             {% endif %}
 
             {% block content %}
