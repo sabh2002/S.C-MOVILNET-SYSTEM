@@ -1,18 +1,46 @@
 {% extends 'base.html' %}
 
-{% block title %}Listado de Marcas - Movilnet System{% endblock %}
+{% block title %}Marcas - Movilnet System{% endblock %}
 
 {% block content %}
-<div class="header-section" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-    <h1 class="header-title">Listado de Marcas</h1>
-    <a href="{% url 'marca_create' %}" class="btn btn-primary">+ Agregar Marca</a>
+<!-- Page Header -->
+<div class="page-header">
+    <div class="page-header-left">
+        <div class="breadcrumb">
+            <a href="{% url 'dashboard' %}"><i class="fas fa-home"></i></a>
+            <span>/</span>
+            <span>Marcas</span>
+        </div>
+        <h1 class="page-title">Listado de Marcas</h1>
+        <p class="page-subtitle">Gestiona las marcas de productos</p>
+    </div>
+    <a href="{% url 'marca_create' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Nueva Marca
+    </a>
 </div>
 
-<!-- Barra de búsqueda -->
-<div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-    <form method="get" style="display: flex; gap: 10px;">
-        <input type="text" name="search" class="form-control" placeholder="Buscar marca..." 
-               value="{{ request.GET.search }}" style="flex: 1;">
+<!-- Stats -->
+<div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+    <div class="stat-card warning">
+        <div class="stat-icon">
+            <i class="fas fa-tags"></i>
+        </div>
+        <div class="stat-content">
+            <div class="stat-value">{{ page_obj.paginator.count }}</div>
+            <div class="stat-label">Total Marcas</div>
+        </div>
+    </div>
+</div>
+
+<!-- Search Bar -->
+<div class="search-bar">
+    <form method="get" class="search-form">
+        <div class="search-input-wrapper">
+            <i class="fas fa-search"></i>
+            <input type="text" name="search" class="form-control"
+                   placeholder="Buscar marca..."
+                   value="{{ request.GET.search }}">
+        </div>
         <button type="submit" class="btn btn-primary">
             <i class="fas fa-search"></i> Buscar
         </button>
@@ -24,53 +52,53 @@
     </form>
 </div>
 
-<!-- Estadísticas -->
-<div style="display: flex; gap: 20px; margin-bottom: 30px;">
-    <div style="background: white; padding: 20px; border-radius: 8px; flex: 1; border-left: 5px solid var(--primary-color); box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-        <h3>Total Marcas</h3>
-        <p style="font-size: 2rem; font-weight: bold;">{{ page_obj.paginator.count }}</p>
-    </div>
-</div>
-
-<!-- Tabla de marcas -->
-<div class="table-container">
+<!-- Brands Table -->
+<div class="table-container animate-fade-in">
     <table>
         <thead>
             <tr>
                 <th>ID</th>
                 <th>Nombre de la Marca</th>
                 <th>Estado</th>
-                <th>Fecha de Registro</th>
-                <th>Opciones</th>
+                <th>Fecha Registro</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
             {% for marca in marcas %}
             <tr>
-                <td>{{ marca.id }}</td>
-                <td>{{ marca.nombre_marca }}</td>
+                <td><span style="color: var(--text-gray);">#{{ marca.id }}</span></td>
+                <td><strong>{{ marca.nombre_marca }}</strong></td>
                 <td>
                     {% if marca.estado %}
-                        <span class="status-active">Activo</span>
+                        <span class="badge badge-success">Activo</span>
                     {% else %}
-                        <span class="status-inactive">Inactivo</span>
+                        <span class="badge badge-secondary">Inactivo</span>
                     {% endif %}
                 </td>
                 <td>{{ marca.fecha_registro|date:"d/m/Y H:i" }}</td>
                 <td>
-                    <a href="{% url 'marca_update' marca.pk %}" title="Editar">
-                        <i class="fas fa-edit action-icon" style="color: #2196F3;"></i>
-                    </a>
-                    <a href="{% url 'marca_delete' marca.pk %}" title="Eliminar">
-                        <i class="fas fa-trash action-icon" style="color: #F44336;"></i>
-                    </a>
+                    <div class="table-actions">
+                        <a href="{% url 'marca_update' marca.pk %}" class="action-btn edit" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{% url 'marca_delete' marca.pk %}" class="action-btn delete" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </div>
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="5" style="text-align: center; padding: 40px;">
-                    <i class="fas fa-inbox" style="font-size: 3rem; color: #ccc;"></i>
-                    <p style="margin-top: 10px; color: #666;">No hay marcas registradas</p>
+                <td colspan="5">
+                    <div class="empty-state">
+                        <i class="fas fa-tags"></i>
+                        <h3>No hay marcas registradas</h3>
+                        <p>Comienza agregando tu primera marca</p>
+                        <a href="{% url 'marca_create' %}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Agregar Marca
+                        </a>
+                    </div>
                 </td>
             </tr>
             {% endfor %}
@@ -78,28 +106,30 @@
     </table>
 </div>
 
-<!-- Paginación -->
+<!-- Pagination -->
 {% if is_paginated %}
-<div style="margin-top: 20px; text-align: center;">
-    <div style="display: inline-flex; gap: 5px;">
-        {% if page_obj.has_previous %}
-            <a href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
-               class="btn btn-outline">Primera</a>
-            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
-               class="btn btn-outline">Anterior</a>
-        {% endif %}
-        
-        <span style="padding: 10px 20px; background: white; border-radius: 4px;">
-            Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
-        </span>
-        
-        {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
-               class="btn btn-outline">Siguiente</a>
-            <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}" 
-               class="btn btn-outline">Última</a>
-        {% endif %}
-    </div>
+<div class="pagination">
+    {% if page_obj.has_previous %}
+        <a href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+            <i class="fas fa-angle-double-left"></i>
+        </a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+            <i class="fas fa-angle-left"></i> Anterior
+        </a>
+    {% endif %}
+
+    <span class="current">
+        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+    </span>
+
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+            Siguiente <i class="fas fa-angle-right"></i>
+        </a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+            <i class="fas fa-angle-double-right"></i>
+        </a>
+    {% endif %}
 </div>
 {% endif %}
 {% endblock %}

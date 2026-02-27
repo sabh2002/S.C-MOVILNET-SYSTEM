@@ -3,70 +3,87 @@
 {% block title %}Mi Perfil - Movilnet System{% endblock %}
 
 {% block content %}
-<div class="header-section" style="margin-bottom: 30px;">
-    <h1 class="header-title"><i class="fas fa-user-circle"></i> Mi Perfil</h1>
+<!-- Page Header -->
+<div class="page-header">
+    <div class="page-header-left">
+        <div class="breadcrumb">
+            <a href="{% url 'dashboard' %}"><i class="fas fa-home"></i></a>
+            <span>/</span>
+            <span>Mi Perfil</span>
+        </div>
+        <h1 class="page-title">Mi Perfil</h1>
+        <p class="page-subtitle">Información de tu cuenta</p>
+    </div>
 </div>
 
-<div style="background: white; padding: 30px; border-radius: 8px; max-width: 600px;">
-    <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);">
-        <div style="width: 72px; height: 72px; border-radius: 50%; background-color: var(--primary-color);
-                    display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem;">
-            <i class="fas fa-user"></i>
-        </div>
-        <div>
-            <h2 style="margin-bottom: 4px;">
-                {{ request.user.first_name }} {{ request.user.last_name }}
-            </h2>
-            <p style="color: var(--text-gray); margin-bottom: 4px;">@{{ request.user.username }}</p>
-            {% if perfil %}
-                <span style="background-color: {% if perfil.rol == 'admin' %}#dc354520{% else %}#28a74520{% endif %};
-                             color: {% if perfil.rol == 'admin' %}#dc3545{% else %}#28a745{% endif %};
-                             padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">
-                    <i class="fas fa-{% if perfil.rol == 'admin' %}shield-alt{% else %}user{% endif %}"></i>
-                    {{ perfil.get_rol_display }}
-                </span>
-            {% else %}
-                <span style="background-color: #6c757d20; color: #6c757d; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem;">
-                    Superusuario
-                </span>
-            {% endif %}
-        </div>
-    </div>
-
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
-        <div>
-            <p style="font-size: 0.8rem; color: var(--text-gray); margin-bottom: 2px;">Nombre de usuario</p>
-            <p style="font-weight: 500;">{{ request.user.username }}</p>
-        </div>
-        <div>
-            <p style="font-size: 0.8rem; color: var(--text-gray); margin-bottom: 2px;">Nombre completo</p>
-            <p style="font-weight: 500;">
-                {% if request.user.first_name or request.user.last_name %}
-                    {{ request.user.first_name }} {{ request.user.last_name }}
-                {% else %}
-                    <span style="color: var(--text-gray);">No especificado</span>
+<!-- Profile Card -->
+<div class="card animate-slide-up" style="max-width: 600px;">
+    <div class="card-body">
+        <!-- Avatar and Name -->
+        <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border-color);">
+            <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+                        display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem; font-weight: 700;">
+                {{ request.user.username|first|upper }}
+            </div>
+            <div>
+                <h2 style="font-size: 1.5rem; margin-bottom: 4px;">
+                    {% if request.user.first_name %}
+                        {{ request.user.first_name }} {{ request.user.last_name }}
+                    {% else %}
+                        {{ request.user.username }}
+                    {% endif %}
+                </h2>
+                <p style="color: var(--text-gray); margin-bottom: 8px;">@{{ request.user.username }}</p>
+                {% if perfil %}
+                    <span class="badge {% if perfil.rol == 'admin' %}badge-danger{% else %}badge-success{% endif %}">
+                        <i class="fas fa-{% if perfil.rol == 'admin' %}shield-alt{% else %}user{% endif %}"></i>
+                        {{ perfil.get_rol_display }}
+                    </span>
+                {% elif request.user.is_superuser %}
+                    <span class="badge badge-info">
+                        <i class="fas fa-crown"></i> Superusuario
+                    </span>
                 {% endif %}
-            </p>
+            </div>
         </div>
-        {% if perfil %}
-        <div>
-            <p style="font-size: 0.8rem; color: var(--text-gray); margin-bottom: 2px;">Rol en el sistema</p>
-            <p style="font-weight: 500;">{{ perfil.get_rol_display }}</p>
-        </div>
-        {% endif %}
-        <div>
-            <p style="font-size: 0.8rem; color: var(--text-gray); margin-bottom: 2px;">Miembro desde</p>
-            <p style="font-weight: 500;">{{ request.user.date_joined|date:"d/m/Y" }}</p>
-        </div>
-    </div>
 
-    <div style="display: flex; gap: 10px;">
-        <a href="{% url 'cambiar_password' %}" class="btn btn-primary">
-            <i class="fas fa-key"></i> Cambiar contraseña
-        </a>
-        <a href="{% url 'dashboard' %}" class="btn btn-outline">
-            <i class="fas fa-home"></i> Volver al inicio
-        </a>
+        <!-- Profile Info Grid -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 32px;">
+            <div>
+                <p style="font-size: 0.75rem; color: var(--text-gray); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Usuario</p>
+                <p style="font-weight: 600;">{{ request.user.username }}</p>
+            </div>
+            <div>
+                <p style="font-size: 0.75rem; color: var(--text-gray); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Nombre Completo</p>
+                <p style="font-weight: 600;">
+                    {% if request.user.first_name or request.user.last_name %}
+                        {{ request.user.first_name }} {{ request.user.last_name }}
+                    {% else %}
+                        <span style="color: var(--text-light);">No especificado</span>
+                    {% endif %}
+                </p>
+            </div>
+            {% if perfil %}
+            <div>
+                <p style="font-size: 0.75rem; color: var(--text-gray); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Rol</p>
+                <p style="font-weight: 600;">{{ perfil.get_rol_display }}</p>
+            </div>
+            {% endif %}
+            <div>
+                <p style="font-size: 0.75rem; color: var(--text-gray); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Miembro desde</p>
+                <p style="font-weight: 600;">{{ request.user.date_joined|date:"d/m/Y" }}</p>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div style="display: flex; gap: 12px;">
+            <a href="{% url 'cambiar_password' %}" class="btn btn-primary">
+                <i class="fas fa-key"></i> Cambiar Contraseña
+            </a>
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-home"></i> Volver al Inicio
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}

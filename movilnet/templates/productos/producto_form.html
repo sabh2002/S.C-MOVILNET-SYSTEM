@@ -3,117 +3,127 @@
 {% block title %}{% if object %}Editar{% else %}Agregar{% endif %} Producto - Movilnet System{% endblock %}
 
 {% block content %}
-<div class="header-section" style="margin-bottom: 30px;">
-    <h1 class="header-title">{% if object %}Editar{% else %}Agregar{% endif %} Producto</h1>
+<!-- Page Header -->
+<div class="page-header">
+    <div class="page-header-left">
+        <div class="breadcrumb">
+            <a href="{% url 'dashboard' %}"><i class="fas fa-home"></i></a>
+            <span>/</span>
+            <a href="{% url 'producto_list' %}">Productos</a>
+            <span>/</span>
+            <span>{% if object %}Editar{% else %}Nuevo{% endif %}</span>
+        </div>
+        <h1 class="page-title">{% if object %}Editar{% else %}Nuevo{% endif %} Producto</h1>
+        <p class="page-subtitle">{% if object %}Modifica la información del producto{% else %}Agrega un nuevo producto al inventario{% endif %}</p>
+    </div>
 </div>
 
-<div style="background: white; padding: 30px; border-radius: 8px;">
+<!-- Form Card -->
+<div class="form-container animate-slide-up">
     <form method="post">
         {% csrf_token %}
-        
+
         {% if form.non_field_errors %}
-            <div style="background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #f5c6cb;">
-                {{ form.non_field_errors }}
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>{{ form.non_field_errors }}</span>
             </div>
         {% endif %}
-        
-        <h3 style="margin-bottom: 20px; color: var(--primary-color);">Información General</h3>
-        <div class="form-grid">
-            <div class="form-group">
-                <label for="{{ form.nombre.id_for_label }}">{{ form.nombre.label }} *</label>
-                {{ form.nombre }}
-                {% if form.nombre.errors %}
-                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 5px;">
-                        {{ form.nombre.errors }}
+
+        <div class="form-body">
+            <!-- General Info Section -->
+            <div style="margin-bottom: 32px;">
+                <h3 style="font-size: 1rem; color: var(--primary-color); margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-info-circle"></i> Información General
+                </h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="{{ form.nombre.id_for_label }}">{{ form.nombre.label }} <span class="required">*</span></label>
+                        {{ form.nombre }}
+                        {% if form.nombre.errors %}
+                            <div class="form-error">{{ form.nombre.errors }}</div>
+                        {% endif %}
                     </div>
-                {% endif %}
-            </div>
-            
-            <div class="form-group">
-                <label for="{{ form.marca.id_for_label }}">{{ form.marca.label }} *</label>
-                {{ form.marca }}
-                {% if form.marca.errors %}
-                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 5px;">
-                        {{ form.marca.errors }}
+
+                    <div class="form-group">
+                        <label for="{{ form.marca.id_for_label }}">{{ form.marca.label }} <span class="required">*</span></label>
+                        {{ form.marca }}
+                        {% if form.marca.errors %}
+                            <div class="form-error">{{ form.marca.errors }}</div>
+                        {% endif %}
                     </div>
-                {% endif %}
-            </div>
-            
-            <div class="form-group">
-                <label for="{{ form.precio.id_for_label }}">{{ form.precio.label }} *</label>
-                {{ form.precio }}
-                {% if form.precio.errors %}
-                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 5px;">
-                        {{ form.precio.errors }}
+
+                    <div class="form-group">
+                        <label for="{{ form.precio.id_for_label }}">{{ form.precio.label }} <span class="required">*</span></label>
+                        {{ form.precio }}
+                        {% if form.precio.errors %}
+                            <div class="form-error">{{ form.precio.errors }}</div>
+                        {% endif %}
                     </div>
-                {% endif %}
-            </div>
-            
-            <div class="form-group">
-                <label for="{{ form.estado.id_for_label }}" style="display: flex; align-items: center; gap: 10px;">
-                    {{ form.estado }}
-                    <span>{{ form.estado.label }}</span>
-                </label>
-                {% if form.estado.errors %}
-                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 5px;">
-                        {{ form.estado.errors }}
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            {{ form.estado }}
+                            <span>{{ form.estado.label }}</span>
+                        </label>
+                        {% if form.estado.errors %}
+                            <div class="form-error">{{ form.estado.errors }}</div>
+                        {% endif %}
                     </div>
-                {% endif %}
-            </div>
-        </div>
-        
-        <div class="form-group">
-            <label for="{{ form.descripcion_caracteristicas.id_for_label }}">{{ form.descripcion_caracteristicas.label }}</label>
-            {{ form.descripcion_caracteristicas }}
-            {% if form.descripcion_caracteristicas.errors %}
-                <div style="color: #dc3545; font-size: 0.875rem; margin-top: 5px;">
-                    {{ form.descripcion_caracteristicas.errors }}
                 </div>
-            {% endif %}
-        </div>
-        
-        <hr style="margin: 30px 0; border: 0; border-top: 1px solid #ddd;">
-        
-        <h3 style="margin-bottom: 20px; color: var(--primary-color);">Control de Inventario</h3>
-        <div class="form-grid">
-            <div class="form-group">
-                <label for="{{ form.stock_actual.id_for_label }}">{{ form.stock_actual.label }} *</label>
-                {{ form.stock_actual }}
-                {% if form.stock_actual.errors %}
-                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 5px;">
-                        {{ form.stock_actual.errors }}
-                    </div>
-                {% endif %}
+
+                <div class="form-group">
+                    <label for="{{ form.descripcion_caracteristicas.id_for_label }}">{{ form.descripcion_caracteristicas.label }}</label>
+                    {{ form.descripcion_caracteristicas }}
+                    {% if form.descripcion_caracteristicas.errors %}
+                        <div class="form-error">{{ form.descripcion_caracteristicas.errors }}</div>
+                    {% endif %}
+                </div>
             </div>
-            
-            <div class="form-group">
-                <label for="{{ form.stock_minimo.id_for_label }}">{{ form.stock_minimo.label }} *</label>
-                {{ form.stock_minimo }}
-                {% if form.stock_minimo.errors %}
-                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 5px;">
-                        {{ form.stock_minimo.errors }}
+
+            <!-- Stock Section -->
+            <div style="padding-top: 24px; border-top: 1px solid var(--border-color);">
+                <h3 style="font-size: 1rem; color: var(--primary-color); margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-boxes"></i> Control de Inventario
+                </h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="{{ form.stock_actual.id_for_label }}">{{ form.stock_actual.label }} <span class="required">*</span></label>
+                        {{ form.stock_actual }}
+                        <div class="form-text">Cantidad disponible actualmente</div>
+                        {% if form.stock_actual.errors %}
+                            <div class="form-error">{{ form.stock_actual.errors }}</div>
+                        {% endif %}
                     </div>
-                {% endif %}
-            </div>
-            
-            <div class="form-group">
-                <label for="{{ form.stock_maximo.id_for_label }}">{{ form.stock_maximo.label }} *</label>
-                {{ form.stock_maximo }}
-                {% if form.stock_maximo.errors %}
-                    <div style="color: #dc3545; font-size: 0.875rem; margin-top: 5px;">
-                        {{ form.stock_maximo.errors }}
+
+                    <div class="form-group">
+                        <label for="{{ form.stock_minimo.id_for_label }}">{{ form.stock_minimo.label }} <span class="required">*</span></label>
+                        {{ form.stock_minimo }}
+                        <div class="form-text">Alerta cuando sea menor a este valor</div>
+                        {% if form.stock_minimo.errors %}
+                            <div class="form-error">{{ form.stock_minimo.errors }}</div>
+                        {% endif %}
                     </div>
-                {% endif %}
+
+                    <div class="form-group">
+                        <label for="{{ form.stock_maximo.id_for_label }}">{{ form.stock_maximo.label }} <span class="required">*</span></label>
+                        {{ form.stock_maximo }}
+                        <div class="form-text">Capacidad máxima de almacenamiento</div>
+                        {% if form.stock_maximo.errors %}
+                            <div class="form-error">{{ form.stock_maximo.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div style="margin-top: 30px; display: flex; gap: 10px;">
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-save"></i> Guardar
-            </button>
-            <a href="{% url 'producto_list' %}" class="btn btn-outline">
+        <div class="form-footer">
+            <a href="{% url 'producto_list' %}" class="btn btn-secondary">
                 <i class="fas fa-times"></i> Cancelar
             </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> {% if object %}Actualizar{% else %}Guardar{% endif %}
+            </button>
         </div>
     </form>
 </div>

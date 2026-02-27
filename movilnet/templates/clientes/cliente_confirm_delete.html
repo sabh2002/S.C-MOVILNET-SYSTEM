@@ -3,39 +3,63 @@
 {% block title %}Eliminar Cliente - Movilnet System{% endblock %}
 
 {% block content %}
-<div class="header-section" style="margin-bottom: 30px;">
-    <h1 class="header-title">Eliminar Cliente</h1>
+<!-- Page Header -->
+<div class="page-header">
+    <div class="page-header-left">
+        <div class="breadcrumb">
+            <a href="{% url 'dashboard' %}"><i class="fas fa-home"></i></a>
+            <span>/</span>
+            <a href="{% url 'cliente_list' %}">Clientes</a>
+            <span>/</span>
+            <span>Eliminar</span>
+        </div>
+        <h1 class="page-title">Eliminar Cliente</h1>
+    </div>
 </div>
 
-<div style="background: white; padding: 30px; border-radius: 8px; max-width: 600px;">
-    <div style="text-align: center; margin-bottom: 30px;">
-        <i class="fas fa-exclamation-triangle" style="font-size: 4rem; color: #F44336;"></i>
-    </div>
-    
-    <h2 style="text-align: center; margin-bottom: 20px;">¿Está seguro que desea eliminar este cliente?</h2>
-    
-    <div style="background: #f9f9f9; padding: 20px; border-radius: 5px; margin-bottom: 30px;">
-        <p><strong>Nombre:</strong> {{ object.nombre }}</p>
-        <p><strong>Cédula:</strong> {{ object.cedula }}</p>
-        <p><strong>Teléfono:</strong> {{ object.telefono }}</p>
-        <p><strong>Dirección:</strong> {{ object.direccion|default:"N/A" }}</p>
-        <p><strong>Fecha de Registro:</strong> {{ object.fecha_registro|date:"d/m/Y H:i" }}</p>
-    </div>
-    
-    <div style="background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #ffeaa7;">
-        <i class="fas fa-info-circle"></i> <strong>Advertencia:</strong> Esta acción no se puede deshacer.
-    </div>
-    
-    <form method="post">
-        {% csrf_token %}
-        <div style="display: flex; gap: 10px; justify-content: center;">
-            <button type="submit" class="btn btn-primary" style="background-color: #F44336;">
-                <i class="fas fa-trash"></i> Sí, Eliminar
-            </button>
-            <a href="{% url 'cliente_list' %}" class="btn btn-outline">
-                <i class="fas fa-arrow-left"></i> Cancelar
-            </a>
+<!-- Delete Card -->
+<div class="card animate-slide-up" style="max-width: 600px;">
+    <div class="card-body" style="text-align: center;">
+        <div style="width: 80px; height: 80px; background: var(--danger-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 2.5rem; color: var(--danger);"></i>
         </div>
-    </form>
+
+        <h2 style="font-size: 1.5rem; margin-bottom: 8px;">¿Eliminar este cliente?</h2>
+        <p style="color: var(--text-gray); margin-bottom: 24px;">Esta acción no se puede deshacer</p>
+
+        <!-- Client Info -->
+        <div style="background: var(--bg-light); padding: 20px; border-radius: var(--radius-sm); text-align: left; margin-bottom: 24px;">
+            <div style="display: grid; gap: 12px;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-gray);">Nombre:</span>
+                    <strong>{{ object.nombre }}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-gray);">Cédula:</span>
+                    <span class="badge badge-secondary">{{ object.cedula }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-gray);">Teléfono:</span>
+                    <span>{{ object.telefono }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-gray);">Registrado:</span>
+                    <span>{{ object.fecha_registro|date:"d/m/Y" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <a href="{% url 'cliente_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Cancelar
+                </a>
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> Sí, Eliminar
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}
