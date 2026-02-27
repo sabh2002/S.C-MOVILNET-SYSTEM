@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Nota de Entrega {{ nota.numero_entrega }} - Movilnet System{% endblock %}
+
+{% block content %}
+<div class="header-section" style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
+    <h1 class="header-title"><i class="fas fa-file-alt"></i> Nota {{ nota.numero_entrega }}</h1>
+    <div style="display: flex; gap: 10px;">
+        <a href="{% url 'nota_entrega_update' nota.pk %}" class="btn btn-primary"><i class="fas fa-edit"></i> Editar</a>
+        <a href="{% url 'nota_entrega_list' %}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> Volver</a>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+    <div style="background: white; padding: 20px; border-radius: 8px;">
+        <h3 style="margin-bottom: 15px; color: var(--text-gray);">Cliente</h3>
+        <p><strong>Nombre:</strong> {{ nota.cliente.nombre }}</p>
+        <p><strong>Cédula:</strong> {{ nota.cliente.cedula }}</p>
+        <p><strong>Teléfono:</strong> {{ nota.cliente.telefono }}</p>
+    </div>
+    <div style="background: white; padding: 20px; border-radius: 8px;">
+        <h3 style="margin-bottom: 15px; color: var(--text-gray);">Totales</h3>
+        <p><strong>Subtotal:</strong> ${{ nota.subtotal }}</p>
+        <p><strong>Descuento:</strong> ${{ nota.descuento }}</p>
+        <p style="font-size: 1.2rem;"><strong>Total:</strong> <span style="color: var(--primary-color);">${{ nota.total }}</span></p>
+    </div>
+</div>
+
+<div style="background: white; padding: 20px; border-radius: 8px;">
+    <h3 style="margin-bottom: 15px; color: var(--text-gray);">Productos</h3>
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: var(--bg-light);">
+                <th style="padding: 12px 16px; text-align: left;">Producto</th>
+                <th style="padding: 12px 16px; text-align: center;">Cantidad</th>
+                <th style="padding: 12px 16px; text-align: right;">Precio Unit.</th>
+                <th style="padding: 12px 16px; text-align: right;">Descuento</th>
+                <th style="padding: 12px 16px; text-align: right;">Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for detalle in nota.detalles.all %}
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 12px 16px;">{{ detalle.producto.nombre }}</td>
+                <td style="padding: 12px 16px; text-align: center;">{{ detalle.cantidad }}</td>
+                <td style="padding: 12px 16px; text-align: right;">${{ detalle.precio_unitario }}</td>
+                <td style="padding: 12px 16px; text-align: right;">${{ detalle.descuento }}</td>
+                <td style="padding: 12px 16px; text-align: right; font-weight: bold;">${{ detalle.subtotal }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--text-gray);">Sin productos</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if nota.observaciones %}
+<div style="background: white; padding: 20px; border-radius: 8px; margin-top: 20px;">
+    <h3 style="margin-bottom: 15px; color: var(--text-gray);">Observaciones</h3>
+    <p>{{ nota.observaciones }}</p>
+</div>
+{% endif %}
+{% endblock %}

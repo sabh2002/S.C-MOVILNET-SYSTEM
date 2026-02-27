@@ -51,21 +51,40 @@
 
             <ul class="menu-list">
                 <li><a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}class="active"{% endif %}><i class="fas fa-home"></i> Inicio</a></li>
+
+                <!-- Catálogos -->
+                <li style="margin-top: 12px; padding: 8px 20px; color: rgba(255,255,255,0.5); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Catálogos</li>
                 <li><a href="{% url 'marca_list' %}" {% if 'marca' in request.path %}class="active"{% endif %}><i class="fas fa-tags"></i> Marcas</a></li>
                 <li><a href="{% url 'producto_list' %}" {% if 'producto' in request.path %}class="active"{% endif %}><i class="fas fa-mobile-alt"></i> Productos</a></li>
                 <li><a href="{% url 'proveedor_list' %}" {% if 'proveedor' in request.path %}class="active"{% endif %}><i class="fas fa-truck"></i> Proveedores</a></li>
                 <li><a href="{% url 'cliente_list' %}" {% if 'cliente' in request.path %}class="active"{% endif %}><i class="fas fa-users"></i> Clientes</a></li>
 
+                <!-- Inventario -->
+                <li style="margin-top: 12px; padding: 8px 20px; color: rgba(255,255,255,0.5); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Inventario</li>
+                <li><a href="{% url 'movimiento_list' %}" {% if 'movimiento' in request.path %}class="active"{% endif %}><i class="fas fa-exchange-alt"></i> Movimientos</a></li>
+                <li><a href="{% url 'tipo_inventario_list' %}" {% if 'tipos' in request.path %}class="active"{% endif %}><i class="fas fa-layer-group"></i> Tipos Mov.</a></li>
+
+                <!-- Compras -->
+                <li style="margin-top: 12px; padding: 8px 20px; color: rgba(255,255,255,0.5); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Compras</li>
+                <li><a href="{% url 'cotizacion_list' %}" {% if 'cotizacion' in request.path %}class="active"{% endif %}><i class="fas fa-file-invoice-dollar"></i> Cotizaciones</a></li>
+                <li><a href="{% url 'orden_compra_list' %}" {% if 'ordenes-compra' in request.path %}class="active"{% endif %}><i class="fas fa-shopping-cart"></i> Órdenes Compra</a></li>
+
+                <!-- Ventas -->
+                <li style="margin-top: 12px; padding: 8px 20px; color: rgba(255,255,255,0.5); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Ventas</li>
+                <li><a href="{% url 'nota_entrega_list' %}" {% if 'notas-entrega' in request.path %}class="active"{% endif %}><i class="fas fa-file-alt"></i> Notas Entrega</a></li>
+
                 {% if request.user.is_authenticated %}
                     {% if request.user.perfil.rol == 'admin' or request.user.is_superuser %}
-                    <li style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.15);">
+                    <!-- Administración -->
+                    <li style="margin-top: 12px; padding: 8px 20px; color: rgba(255,255,255,0.5); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Admin</li>
+                    <li>
                         <a href="{% url 'lista_empleados' %}" {% if 'empleados' in request.path %}class="active"{% endif %}>
                             <i class="fas fa-users-cog"></i> Empleados
                         </a>
                     </li>
                     {% endif %}
 
-                    <li style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.15);">
+                    <li style="margin-top: 12px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.15);">
                         <a href="{% url 'perfil' %}" {% if request.resolver_match.url_name == 'perfil' %}class="active"{% endif %}>
                             <i class="fas fa-user-circle"></i> Mi Perfil
                         </a>

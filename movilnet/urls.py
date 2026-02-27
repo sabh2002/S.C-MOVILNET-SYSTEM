@@ -38,4 +38,35 @@ urlpatterns = [
     path('productos/crear/', views.ProductoCreateView.as_view(), name='producto_create'),
     path('productos/editar/<int:pk>/', views.ProductoUpdateView.as_view(), name='producto_update'),
     path('productos/eliminar/<int:pk>/', views.ProductoDeleteView.as_view(), name='producto_delete'),
+
+    # URLs Tipo Inventario
+    path('inventario/tipos/', views.TipoInventarioListView.as_view(), name='tipo_inventario_list'),
+    path('inventario/tipos/crear/', views.TipoInventarioCreateView.as_view(), name='tipo_inventario_create'),
+    path('inventario/tipos/editar/<int:pk>/', views.TipoInventarioUpdateView.as_view(), name='tipo_inventario_update'),
+    path('inventario/tipos/eliminar/<int:pk>/', views.TipoInventarioDeleteView.as_view(), name='tipo_inventario_delete'),
+
+    # URLs Movimientos de Inventario
+    path('inventario/movimientos/', views.MovimientoInventarioListView.as_view(), name='movimiento_list'),
+    path('inventario/movimientos/crear/', views.MovimientoInventarioCreateView.as_view(), name='movimiento_create'),
+
+    # URLs Cotización
+    path('cotizaciones/', views.CotizacionListView.as_view(), name='cotizacion_list'),
+    path('cotizaciones/crear/', views.CotizacionCreateView.as_view(), name='cotizacion_create'),
+    path('cotizaciones/<int:pk>/', views.CotizacionDetailView.as_view(), name='cotizacion_detail'),
+    path('cotizaciones/editar/<int:pk>/', views.CotizacionUpdateView.as_view(), name='cotizacion_update'),
+    path('cotizaciones/eliminar/<int:pk>/', views.CotizacionDeleteView.as_view(), name='cotizacion_delete'),
+
+    # URLs Orden de Compra
+    path('ordenes-compra/', views.OrdenCompraListView.as_view(), name='orden_compra_list'),
+    path('ordenes-compra/crear/', views.OrdenCompraCreateView.as_view(), name='orden_compra_create'),
+    path('ordenes-compra/<int:pk>/', views.OrdenCompraDetailView.as_view(), name='orden_compra_detail'),
+    path('ordenes-compra/editar/<int:pk>/', views.OrdenCompraUpdateView.as_view(), name='orden_compra_update'),
+    path('ordenes-compra/eliminar/<int:pk>/', views.OrdenCompraDeleteView.as_view(), name='orden_compra_delete'),
+
+    # URLs Nota de Entrega
+    path('notas-entrega/', views.NotaEntregaListView.as_view(), name='nota_entrega_list'),
+    path('notas-entrega/crear/', views.NotaEntregaCreateView.as_view(), name='nota_entrega_create'),
+    path('notas-entrega/<int:pk>/', views.NotaEntregaDetailView.as_view(), name='nota_entrega_detail'),
+    path('notas-entrega/editar/<int:pk>/', views.NotaEntregaUpdateView.as_view(), name='nota_entrega_update'),
+    path('notas-entrega/eliminar/<int:pk>/', views.NotaEntregaDeleteView.as_view(), name='nota_entrega_delete'),
 ]

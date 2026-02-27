@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Órdenes de Compra - Movilnet System{% endblock %}
+
+{% block content %}
+<div class="header-section" style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
+    <h1 class="header-title"><i class="fas fa-shopping-cart"></i> Órdenes de Compra</h1>
+    <a href="{% url 'orden_compra_create' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Nueva Orden
+    </a>
+</div>
+
+<div style="background: white; padding: 20px; border-radius: 8px;">
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: var(--bg-light); border-bottom: 2px solid var(--border-color);">
+                <th style="padding: 12px 16px; text-align: left;">Número</th>
+                <th style="padding: 12px 16px; text-align: left;">Cotización</th>
+                <th style="padding: 12px 16px; text-align: left;">Proveedor</th>
+                <th style="padding: 12px 16px; text-align: left;">Fecha Orden</th>
+                <th style="padding: 12px 16px; text-align: center;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for orden in ordenes %}
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 12px 16px; font-weight: 500;">{{ orden.numero_orden }}</td>
+                <td style="padding: 12px 16px;">COT-{{ orden.cotizacion.pk }}</td>
+                <td style="padding: 12px 16px;">{{ orden.cotizacion.proveedor.nombre }}</td>
+                <td style="padding: 12px 16px;">{{ orden.fecha_orden|date:"d/m/Y" }}</td>
+                <td style="padding: 12px 16px; text-align: center;">
+                    <a href="{% url 'orden_compra_detail' orden.pk %}" style="color: #17a2b8; margin-right: 8px;"><i class="fas fa-eye"></i></a>
+                    <a href="{% url 'orden_compra_update' orden.pk %}" style="color: #007bff; margin-right: 8px;"><i class="fas fa-edit"></i></a>
+                    <a href="{% url 'orden_compra_delete' orden.pk %}" style="color: #dc3545;"><i class="fas fa-trash"></i></a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="padding: 30px; text-align: center; color: var(--text-gray);">
+                    No hay órdenes de compra registradas.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

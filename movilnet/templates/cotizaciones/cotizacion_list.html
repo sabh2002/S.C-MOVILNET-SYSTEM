@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Cotizaciones - Movilnet System{% endblock %}
+
+{% block content %}
+<div class="header-section" style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
+    <h1 class="header-title"><i class="fas fa-file-invoice-dollar"></i> Cotizaciones</h1>
+    <a href="{% url 'cotizacion_create' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Nueva Cotización
+    </a>
+</div>
+
+<div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+    <form method="get" style="display: flex; gap: 10px;">
+        <input type="text" name="search" class="form-control" placeholder="Buscar por proveedor..."
+               value="{{ request.GET.search }}" style="max-width: 300px;">
+        <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i></button>
+    </form>
+</div>
+
+<div style="background: white; padding: 20px; border-radius: 8px;">
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: var(--bg-light); border-bottom: 2px solid var(--border-color);">
+                <th style="padding: 12px 16px; text-align: left;">Código</th>
+                <th style="padding: 12px 16px; text-align: left;">Proveedor</th>
+                <th style="padding: 12px 16px; text-align: left;">Fecha</th>
+                <th style="padding: 12px 16px; text-align: left;">Validez</th>
+                <th style="padding: 12px 16px; text-align: left;">Estado</th>
+                <th style="padding: 12px 16px; text-align: center;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cot in cotizaciones %}
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 12px 16px; font-weight: 500;">COT-{{ cot.pk }}</td>
+                <td style="padding: 12px 16px;">{{ cot.proveedor.nombre }}</td>
+                <td style="padding: 12px 16px;">{{ cot.fecha_cotizacion|date:"d/m/Y" }}</td>
+                <td style="padding: 12px 16px;">{{ cot.validez_dias }} días</td>
+                <td style="padding: 12px 16px;">
+                    <span style="padding: 3px 10px; border-radius: 20px; font-size: 0.8rem;
+                        {% if cot.estado == 'aprobada' %}background-color: #d4edda; color: #155724;
+                        {% elif cot.estado == 'rechazada' %}background-color: #f8d7da; color: #721c24;
+                        {% elif cot.estado == 'vencida' %}background-color: #e2e3e5; color: #383d41;
+                        {% else %}background-color: #fff3cd; color: #856404;{% endif %}">
+                        {{ cot.get_estado_display }}
+                    </span>
+                </td>
+                <td style="padding: 12px 16px; text-align: center;">
+                    <a href="{% url 'cotizacion_detail' cot.pk %}" style="color: #17a2b8; margin-right: 8px;" title="Ver">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{% url 'cotizacion_update' cot.pk %}" style="color: #007bff; margin-right: 8px;" title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <a href="{% url 'cotizacion_delete' cot.pk %}" style="color: #dc3545;" title="Eliminar">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="padding: 30px; text-align: center; color: var(--text-gray);">
+                    No hay cotizaciones registradas.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if is_paginated %}
+    <div style="margin-top: 20px; display: flex; justify-content: center; gap: 10px;">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-outline">Anterior</a>
+        {% endif %}
+        <span style="padding: 10px;">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="btn btn-outline">Siguiente</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

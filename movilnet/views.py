@@ -1,17 +1,26 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, logout
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.db.models import Count, Q, F
+from django.db import transaction
 
-from .models import Marca, Proveedor, Cliente, Producto, PerfilEmpleado
+from .models import (
+    Marca, Proveedor, Cliente, Producto, PerfilEmpleado,
+    TipoInventario, MovimientoInventario, Cotizacion, DetalleCotizacion,
+    OrdenCompra, DetalleOrdenCompra, NotaEntrega, DetalleNotaEntrega
+)
 from .forms import (
     MarcaForm, ProveedorForm, ClienteForm, ProductoForm,
     LoginForm, CambiarPasswordForm, RecuperarPasswordForm,
     NuevaPasswordForm, RegistroEmpleadoForm,
+    TipoInventarioForm, MovimientoInventarioForm,
+    CotizacionForm, DetalleCotizacionFormSet,
+    OrdenCompraForm, DetalleOrdenCompraFormSet,
+    NotaEntregaForm, DetalleNotaEntregaFormSet,
 )
 
 
@@ -355,3 +364,354 @@ class ProductoDeleteView(LoginRequiredMixin, AdminRequeridoMixin, DeleteView):
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, '¡Producto eliminado exitosamente!')
         return super().delete(request, *args, **kwargs)
+
+
+# ==================== CRUD TIPO INVENTARIO ====================
+
+class TipoInventarioListView(LoginRequiredMixin, ListView):
+    model = TipoInventario
+    template_name = 'inventario/tipo_inventario_list.html'
+    context_object_name = 'tipos'
+    paginate_by = 10
+
+
+class TipoInventarioCreateView(LoginRequiredMixin, CreateView):
+    model = TipoInventario
+    form_class = TipoInventarioForm
+    template_name = 'inventario/tipo_inventario_form.html'
+    success_url = reverse_lazy('tipo_inventario_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, '¡Tipo de inventario creado exitosamente!')
+        return super().form_valid(form)
+
+
+class TipoInventarioUpdateView(LoginRequiredMixin, UpdateView):
+    model = TipoInventario
+    form_class = TipoInventarioForm
+    template_name = 'inventario/tipo_inventario_form.html'
+    success_url = reverse_lazy('tipo_inventario_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, '¡Tipo de inventario actualizado!')
+        return super().form_valid(form)
+
+
+class TipoInventarioDeleteView(LoginRequiredMixin, AdminRequeridoMixin, DeleteView):
+    model = TipoInventario
+    template_name = 'inventario/tipo_inventario_confirm_delete.html'
+    success_url = reverse_lazy('tipo_inventario_list')
+
+
+# ==================== MOVIMIENTOS DE INVENTARIO ====================
+
+class MovimientoInventarioListView(LoginRequiredMixin, ListView):
+    model = MovimientoInventario
+    template_name = 'inventario/movimiento_list.html'
+    context_object_name = 'movimientos'
+    paginate_by = 15
+
+    def get_queryset(self):
+        queryset = super().get_queryset().select_related('producto', 'tipo_inventario', 'empleado')
+        search = self.request.GET.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(producto__nombre__icontains=search) |
+                Q(tipo_inventario__tipo_movimiento__icontains=search)
+            )
+        return queryset
+
+
+class MovimientoInventarioCreateView(LoginRequiredMixin, CreateView):
+    model = MovimientoInventario
+    form_class = MovimientoInventarioForm
+    template_name = 'inventario/movimiento_form.html'
+    success_url = reverse_lazy('movimiento_list')
+
+    def form_valid(self, form):
+        movimiento = form.save(commit=False)
+        try:
+            movimiento.empleado = self.request.user.perfil
+        except PerfilEmpleado.DoesNotExist:
+            movimiento.empleado = None
+
+        # Actualizar stock del producto según el tipo de movimiento
+        producto = movimiento.producto
+        tipo = movimiento.tipo_inventario.tipo_movimiento.lower()
+
+        if 'entrada' in tipo or 'compra' in tipo:
+            producto.stock_actual += movimiento.cantidad
+        elif 'salida' in tipo or 'venta' in tipo:
+            if producto.stock_actual >= movimiento.cantidad:
+                producto.stock_actual -= movimiento.cantidad
+            else:
+                messages.error(self.request, f'Stock insuficiente. Disponible: {producto.stock_actual}')
+                return self.form_invalid(form)
+
+        producto.save()
+        movimiento.save()
+        messages.success(self.request, '¡Movimiento registrado exitosamente!')
+        return redirect(self.success_url)
+
+
+# ==================== CRUD COTIZACIÓN ====================
+
+class CotizacionListView(LoginRequiredMixin, ListView):
+    model = Cotizacion
+    template_name = 'cotizaciones/cotizacion_list.html'
+    context_object_name = 'cotizaciones'
+    paginate_by = 10
+
+    def get_queryset(self):
+        queryset = super().get_queryset().select_related('proveedor')
+        search = self.request.GET.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(proveedor__nombre__icontains=search) |
+                Q(proveedor__rif__icontains=search)
+            )
+        return queryset
+
+
+class CotizacionDetailView(LoginRequiredMixin, DetailView):
+    model = Cotizacion
+    template_name = 'cotizaciones/cotizacion_detail.html'
+    context_object_name = 'cotizacion'
+
+
+class CotizacionCreateView(LoginRequiredMixin, CreateView):
+    model = Cotizacion
+    form_class = CotizacionForm
+    template_name = 'cotizaciones/cotizacion_form.html'
+    success_url = reverse_lazy('cotizacion_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context['detalles'] = DetalleCotizacionFormSet(self.request.POST)
+        else:
+            context['detalles'] = DetalleCotizacionFormSet()
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        detalles = context['detalles']
+        with transaction.atomic():
+            self.object = form.save()
+            if detalles.is_valid():
+                detalles.instance = self.object
+                detalles.save()
+        messages.success(self.request, '¡Cotización creada exitosamente!')
+        return redirect(self.success_url)
+
+
+class CotizacionUpdateView(LoginRequiredMixin, UpdateView):
+    model = Cotizacion
+    form_class = CotizacionForm
+    template_name = 'cotizaciones/cotizacion_form.html'
+    success_url = reverse_lazy('cotizacion_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context['detalles'] = DetalleCotizacionFormSet(self.request.POST, instance=self.object)
+        else:
+            context['detalles'] = DetalleCotizacionFormSet(instance=self.object)
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        detalles = context['detalles']
+        with transaction.atomic():
+            self.object = form.save()
+            if detalles.is_valid():
+                detalles.instance = self.object
+                detalles.save()
+        messages.success(self.request, '¡Cotización actualizada exitosamente!')
+        return redirect(self.success_url)
+
+
+class CotizacionDeleteView(LoginRequiredMixin, AdminRequeridoMixin, DeleteView):
+    model = Cotizacion
+    template_name = 'cotizaciones/cotizacion_confirm_delete.html'
+    success_url = reverse_lazy('cotizacion_list')
+
+
+# ==================== CRUD ORDEN DE COMPRA ====================
+
+class OrdenCompraListView(LoginRequiredMixin, ListView):
+    model = OrdenCompra
+    template_name = 'ordenes/orden_compra_list.html'
+    context_object_name = 'ordenes'
+    paginate_by = 10
+
+    def get_queryset(self):
+        return super().get_queryset().select_related('cotizacion__proveedor')
+
+
+class OrdenCompraDetailView(LoginRequiredMixin, DetailView):
+    model = OrdenCompra
+    template_name = 'ordenes/orden_compra_detail.html'
+    context_object_name = 'orden'
+
+
+class OrdenCompraCreateView(LoginRequiredMixin, CreateView):
+    model = OrdenCompra
+    form_class = OrdenCompraForm
+    template_name = 'ordenes/orden_compra_form.html'
+    success_url = reverse_lazy('orden_compra_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context['detalles'] = DetalleOrdenCompraFormSet(self.request.POST)
+        else:
+            context['detalles'] = DetalleOrdenCompraFormSet()
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        detalles = context['detalles']
+        with transaction.atomic():
+            self.object = form.save()
+            if detalles.is_valid():
+                detalles.instance = self.object
+                detalles.save()
+        messages.success(self.request, '¡Orden de compra creada exitosamente!')
+        return redirect(self.success_url)
+
+
+class OrdenCompraUpdateView(LoginRequiredMixin, UpdateView):
+    model = OrdenCompra
+    form_class = OrdenCompraForm
+    template_name = 'ordenes/orden_compra_form.html'
+    success_url = reverse_lazy('orden_compra_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context['detalles'] = DetalleOrdenCompraFormSet(self.request.POST, instance=self.object)
+        else:
+            context['detalles'] = DetalleOrdenCompraFormSet(instance=self.object)
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        detalles = context['detalles']
+        with transaction.atomic():
+            self.object = form.save()
+            if detalles.is_valid():
+                detalles.instance = self.object
+                detalles.save()
+        messages.success(self.request, '¡Orden de compra actualizada!')
+        return redirect(self.success_url)
+
+
+class OrdenCompraDeleteView(LoginRequiredMixin, AdminRequeridoMixin, DeleteView):
+    model = OrdenCompra
+    template_name = 'ordenes/orden_compra_confirm_delete.html'
+    success_url = reverse_lazy('orden_compra_list')
+
+
+# ==================== CRUD NOTA DE ENTREGA ====================
+
+class NotaEntregaListView(LoginRequiredMixin, ListView):
+    model = NotaEntrega
+    template_name = 'notas_entrega/nota_entrega_list.html'
+    context_object_name = 'notas'
+    paginate_by = 10
+
+    def get_queryset(self):
+        queryset = super().get_queryset().select_related('cliente')
+        search = self.request.GET.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(cliente__nombre__icontains=search) |
+                Q(numero_entrega__icontains=search)
+            )
+        return queryset
+
+
+class NotaEntregaDetailView(LoginRequiredMixin, DetailView):
+    model = NotaEntrega
+    template_name = 'notas_entrega/nota_entrega_detail.html'
+    context_object_name = 'nota'
+
+
+class NotaEntregaCreateView(LoginRequiredMixin, CreateView):
+    model = NotaEntrega
+    form_class = NotaEntregaForm
+    template_name = 'notas_entrega/nota_entrega_form.html'
+    success_url = reverse_lazy('nota_entrega_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context['detalles'] = DetalleNotaEntregaFormSet(self.request.POST)
+        else:
+            context['detalles'] = DetalleNotaEntregaFormSet()
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        detalles = context['detalles']
+        with transaction.atomic():
+            self.object = form.save(commit=False)
+            self.object.save()
+
+            if detalles.is_valid():
+                detalles.instance = self.object
+                detalles.save()
+
+                # Calcular totales
+                subtotal = sum(
+                    (d.cantidad * d.precio_unitario - d.descuento)
+                    for d in self.object.detalles.all()
+                )
+                self.object.subtotal = subtotal
+                self.object.total = subtotal - self.object.descuento
+                self.object.save()
+
+        messages.success(self.request, '¡Nota de entrega creada exitosamente!')
+        return redirect(self.success_url)
+
+
+class NotaEntregaUpdateView(LoginRequiredMixin, UpdateView):
+    model = NotaEntrega
+    form_class = NotaEntregaForm
+    template_name = 'notas_entrega/nota_entrega_form.html'
+    success_url = reverse_lazy('nota_entrega_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context['detalles'] = DetalleNotaEntregaFormSet(self.request.POST, instance=self.object)
+        else:
+            context['detalles'] = DetalleNotaEntregaFormSet(instance=self.object)
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        detalles = context['detalles']
+        with transaction.atomic():
+            self.object = form.save()
+            if detalles.is_valid():
+                detalles.instance = self.object
+                detalles.save()
+
+                subtotal = sum(
+                    (d.cantidad * d.precio_unitario - d.descuento)
+                    for d in self.object.detalles.all()
+                )
+                self.object.subtotal = subtotal
+                self.object.total = subtotal - self.object.descuento
+                self.object.save()
+
+        messages.success(self.request, '¡Nota de entrega actualizada!')
+        return redirect(self.success_url)
+
+
+class NotaEntregaDeleteView(LoginRequiredMixin, AdminRequeridoMixin, DeleteView):
+    model = NotaEntrega
+    template_name = 'notas_entrega/nota_entrega_confirm_delete.html'
+    success_url = reverse_lazy('nota_entrega_list')
