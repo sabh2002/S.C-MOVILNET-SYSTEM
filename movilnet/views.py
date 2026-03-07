@@ -435,23 +435,69 @@ class MovimientoInventarioCreateView(LoginRequiredMixin, CreateView):
         except PerfilEmpleado.DoesNotExist:
             movimiento.empleado = None
 
-        # Actualizar stock del producto según el tipo de movimiento
         producto = movimiento.producto
-        tipo = movimiento.tipo_inventario.tipo_movimiento.lower()
+        tipo = movimiento.tipo_inventario
 
-        if 'entrada' in tipo or 'compra' in tipo:
+        if tipo.es_entrada:
             producto.stock_actual += movimiento.cantidad
-        elif 'salida' in tipo or 'venta' in tipo:
+        else:  # SALIDA
             if producto.stock_actual >= movimiento.cantidad:
                 producto.stock_actual -= movimiento.cantidad
             else:
-                messages.error(self.request, f'Stock insuficiente. Disponible: {producto.stock_actual}')
+                messages.error(
+                    self.request,
+                    f'Stock insuficiente para "{producto.nombre}". '
+                    f'Disponible: {producto.stock_actual} unidades.'
+                )
                 return self.form_invalid(form)
 
-        producto.save()
-        movimiento.save()
+        with transaction.atomic():
+            producto.save()
+            movimiento.save()
+
         messages.success(self.request, '¡Movimiento registrado exitosamente!')
         return redirect(self.success_url)
+
+
+# ==================== STOCK ACTUAL ====================
+
+@login_required
+def stock_actual_view(request):
+    """Vista de estado actual del inventario de todos los productos"""
+    from django.db.models import F
+
+    productos = Producto.objects.select_related('marca').filter(estado=True).order_by('nombre')
+
+    # Filtro por estado de stock
+    filtro_estado = request.GET.get('estado', '')
+    if filtro_estado == 'sin_stock':
+        productos = productos.filter(stock_actual=0)
+    elif filtro_estado == 'bajo':
+        productos = productos.filter(stock_actual__gt=0, stock_actual__lt=F('stock_minimo'))
+    elif filtro_estado == 'normal':
+        productos = productos.filter(stock_actual__gte=F('stock_minimo'), stock_actual__lt=F('stock_maximo'))
+    elif filtro_estado == 'maximo':
+        productos = productos.filter(stock_actual__gte=F('stock_maximo'))
+
+    # Filtro por marca
+    filtro_marca = request.GET.get('marca', '')
+    if filtro_marca:
+        productos = productos.filter(marca__id=filtro_marca)
+
+    marcas = Marca.objects.filter(estado=True).order_by('nombre_marca')
+
+    context = {
+        'productos': productos,
+        'marcas': marcas,
+        'filtro_estado': filtro_estado,
+        'filtro_marca': filtro_marca,
+        'total_productos': productos.count(),
+        'sin_stock': Producto.objects.filter(estado=True, stock_actual=0).count(),
+        'stock_bajo': Producto.objects.filter(
+            estado=True, stock_actual__gt=0, stock_actual__lt=F('stock_minimo')
+        ).count(),
+    }
+    return render(request, 'inventario/stock_actual.html', context)
 
 
 # ==================== CRUD COTIZACIÓN ====================

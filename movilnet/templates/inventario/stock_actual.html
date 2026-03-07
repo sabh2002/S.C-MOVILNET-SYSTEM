@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}Stock Actual - Movilnet System{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="page-header-left">
+        <div class="breadcrumb">
+            <a href="{% url 'dashboard' %}"><i class="fas fa-home"></i></a>
+            <span>/</span>
+            <span>Inventario</span>
+            <span>/</span>
+            <span>Stock Actual</span>
+        </div>
+        <h1 class="page-title">Estado de Inventario</h1>
+        <p class="page-subtitle">Niveles de stock actuales de todos los productos activos</p>
+    </div>
+    <a href="{% url 'movimiento_create' %}" class="btn btn-primary">
+        <i class="fas fa-exchange-alt"></i> Registrar Movimiento
+    </a>
+</div>
+
+<!-- Resumen -->
+<div class="stats-grid animate-slide-up" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+    <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-boxes"></i></div>
+        <div class="stat-content">
+            <div class="stat-value">{{ total_productos }}</div>
+            <div class="stat-label">Productos Activos</div>
+        </div>
+    </div>
+    <div class="stat-card danger">
+        <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
+        <div class="stat-content">
+            <div class="stat-value">{{ sin_stock }}</div>
+            <div class="stat-label">Sin Stock</div>
+        </div>
+    </div>
+    <div class="stat-card warning">
+        <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="stat-content">
+            <div class="stat-value">{{ stock_bajo }}</div>
+            <div class="stat-label">Stock Bajo</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card animate-slide-up" style="margin-bottom: 20px;">
+    <div class="card-body" style="padding: 16px 20px;">
+        <form method="get" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+                <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-gray);">Estado de Stock</label>
+                <select name="estado" class="form-control" style="min-width: 160px;">
+                    <option value="">Todos</option>
+                    <option value="sin_stock" {% if filtro_estado == 'sin_stock' %}selected{% endif %}>Sin Stock</option>
+                    <option value="bajo" {% if filtro_estado == 'bajo' %}selected{% endif %}>Stock Bajo</option>
+                    <option value="normal" {% if filtro_estado == 'normal' %}selected{% endif %}>Normal</option>
+                    <option value="maximo" {% if filtro_estado == 'maximo' %}selected{% endif %}>Stock Máximo</option>
+                </select>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+                <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-gray);">Marca</label>
+                <select name="marca" class="form-control" style="min-width: 160px;">
+                    <option value="">Todas las marcas</option>
+                    {% for marca in marcas %}
+                        <option value="{{ marca.id }}" {% if filtro_marca == marca.id|stringformat:"s" %}selected{% endif %}>
+                            {{ marca.nombre_marca }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filtrar</button>
+            {% if filtro_estado or filtro_marca %}
+            <a href="{% url 'stock_actual' %}" class="btn btn-outline"><i class="fas fa-times"></i> Limpiar</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Tabla de Stock -->
+<div class="table-container animate-fade-in">
+    <table>
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Marca</th>
+                <th style="text-align: center;">Mín.</th>
+                <th style="text-align: center;">Actual</th>
+                <th style="text-align: center;">Máx.</th>
+                <th style="min-width: 160px;">Nivel</th>
+                <th style="text-align: center;">Estado</th>
+                <th style="text-align: center;">Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for producto in productos %}
+            {% with pct=producto.stock_actual|floatformat:0 %}
+            <tr>
+                <td><strong>{{ producto.nombre }}</strong></td>
+                <td>{{ producto.marca.nombre_marca }}</td>
+                <td style="text-align: center; color: var(--text-gray);">{{ producto.stock_minimo }}</td>
+                <td style="text-align: center;">
+                    <strong style="font-size: 1.05rem;
+                        {% if producto.stock_actual == 0 %}color: var(--danger);
+                        {% elif producto.necesita_reposicion %}color: var(--warning);
+                        {% else %}color: var(--success);{% endif %}">
+                        {{ producto.stock_actual }}
+                    </strong>
+                </td>
+                <td style="text-align: center; color: var(--text-gray);">{{ producto.stock_maximo }}</td>
+                <td>
+                    <!-- Barra de progreso visual -->
+                    {% if producto.stock_maximo > 0 %}
+                    {% with porcentaje=producto.stock_actual|floatformat:0 %}
+                    <div style="background: var(--bg-dark); border-radius: 20px; height: 8px; overflow: hidden;">
+                        <div style="
+                            height: 100%;
+                            border-radius: 20px;
+                            width: {% widthratio producto.stock_actual producto.stock_maximo 100 %}%;
+                            max-width: 100%;
+                            background: {% if producto.stock_actual == 0 %}var(--danger){% elif producto.necesita_reposicion %}var(--warning){% elif producto.stock_actual >= producto.stock_maximo %}var(--info){% else %}var(--success){% endif %};
+                            transition: width 0.3s ease;
+                        "></div>
+                    </div>
+                    <div style="font-size: 0.72rem; color: var(--text-light); margin-top: 2px; text-align: right;">
+                        {% widthratio producto.stock_actual producto.stock_maximo 100 %}%
+                    </div>
+                    {% endwith %}
+                    {% endif %}
+                </td>
+                <td style="text-align: center;">
+                    {% if producto.stock_actual == 0 %}
+                        <span class="badge badge-danger"><i class="fas fa-times-circle"></i> Sin Stock</span>
+                    {% elif producto.necesita_reposicion %}
+                        <span class="badge badge-warning"><i class="fas fa-exclamation-triangle"></i> Stock Bajo</span>
+                    {% elif producto.stock_actual >= producto.stock_maximo %}
+                        <span class="badge badge-info"><i class="fas fa-arrow-up"></i> Máximo</span>
+                    {% else %}
+                        <span class="badge badge-success"><i class="fas fa-check-circle"></i> Normal</span>
+                    {% endif %}
+                </td>
+                <td style="text-align: center;">
+                    <a href="{% url 'movimiento_create' %}?producto={{ producto.pk }}"
+                       class="action-btn edit" title="Registrar movimiento para este producto">
+                        <i class="fas fa-exchange-alt"></i>
+                    </a>
+                </td>
+            </tr>
+            {% endwith %}
+            {% empty %}
+            <tr>
+                <td colspan="8">
+                    <div class="empty-state">
+                        <i class="fas fa-boxes"></i>
+                        <h3>No se encontraron productos</h3>
+                        <p>Prueba con otros filtros o agrega productos al sistema</p>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

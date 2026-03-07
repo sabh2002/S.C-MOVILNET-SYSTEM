@@ -367,10 +367,17 @@ class RegistroEmpleadoForm(forms.ModelForm):
 class TipoInventarioForm(forms.ModelForm):
     class Meta:
         model = TipoInventario
-        fields = ['tipo_movimiento', 'categoria_movimiento']
+        fields = ['tipo_movimiento', 'direccion', 'categoria_movimiento']
         widgets = {
-            'tipo_movimiento': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Entrada, Salida'}),
-            'categoria_movimiento': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Compra, Venta, Ajuste'}),
+            'tipo_movimiento': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej. Compra a proveedor, Venta, Devolución...'
+            }),
+            'direccion': forms.Select(attrs={'class': 'form-control'}),
+            'categoria_movimiento': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej. Compra, Ajuste, Devolución...'
+            }),
         }
 
 

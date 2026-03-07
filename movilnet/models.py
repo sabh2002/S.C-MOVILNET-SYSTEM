@@ -219,16 +219,37 @@ class Bitacora(models.Model):
 
 class TipoInventario(models.Model):
     """Modelo para tipos de movimiento de inventario"""
-    tipo_movimiento = models.CharField(max_length=50, verbose_name="Tipo de Movimiento")
-    categoria_movimiento = models.CharField(max_length=50, verbose_name="Categoría de Movimiento")
+    DIRECCION_CHOICES = [
+        ('ENTRADA', 'Entrada (suma stock)'),
+        ('SALIDA', 'Salida (resta stock)'),
+    ]
+
+    tipo_movimiento = models.CharField(max_length=50, verbose_name="Nombre del Tipo")
+    categoria_movimiento = models.CharField(max_length=50, verbose_name="Descripción / Categoría")
+    direccion = models.CharField(
+        max_length=10,
+        choices=DIRECCION_CHOICES,
+        verbose_name="Dirección",
+        help_text="ENTRADA suma unidades al stock. SALIDA las resta."
+    )
 
     class Meta:
         verbose_name = "Tipo de Inventario"
         verbose_name_plural = "Tipos de Inventario"
-        ordering = ['tipo_movimiento']
+        ordering = ['direccion', 'tipo_movimiento']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['tipo_movimiento', 'direccion'],
+                name='unique_tipo_direccion'
+            )
+        ]
 
     def __str__(self):
-        return f"{self.tipo_movimiento} - {self.categoria_movimiento}"
+        return f"{self.get_direccion_display()} — {self.tipo_movimiento}"
+
+    @property
+    def es_entrada(self):
+        return self.direccion == 'ENTRADA'
 
 
 class MovimientoInventario(models.Model):

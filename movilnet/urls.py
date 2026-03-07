@@ -45,7 +45,8 @@ urlpatterns = [
     path('inventario/tipos/editar/<int:pk>/', views.TipoInventarioUpdateView.as_view(), name='tipo_inventario_update'),
     path('inventario/tipos/eliminar/<int:pk>/', views.TipoInventarioDeleteView.as_view(), name='tipo_inventario_delete'),
 
-    # URLs Movimientos de Inventario
+    # URLs Inventario
+    path('inventario/stock/', views.stock_actual_view, name='stock_actual'),
     path('inventario/movimientos/', views.MovimientoInventarioListView.as_view(), name='movimiento_list'),
     path('inventario/movimientos/crear/', views.MovimientoInventarioCreateView.as_view(), name='movimiento_create'),
 

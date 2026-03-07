@@ -1,29 +1,87 @@
 {% extends 'base.html' %}
 
-{% block title %}{% if object %}Editar{% else %}Nuevo{% endif %} Tipo de Inventario - Movilnet System{% endblock %}
+{% block title %}{% if object %}Editar{% else %}Nuevo{% endif %} Tipo de Movimiento - Movilnet System{% endblock %}
 
 {% block content %}
-<div class="header-section" style="margin-bottom: 30px;">
-    <h1 class="header-title">{% if object %}Editar{% else %}Nuevo{% endif %} Tipo de Inventario</h1>
+<div class="page-header">
+    <div class="page-header-left">
+        <div class="breadcrumb">
+            <a href="{% url 'dashboard' %}"><i class="fas fa-home"></i></a>
+            <span>/</span>
+            <a href="{% url 'tipo_inventario_list' %}">Tipos de Movimiento</a>
+            <span>/</span>
+            <span>{% if object %}Editar{% else %}Nuevo{% endif %}</span>
+        </div>
+        <h1 class="page-title">{% if object %}Editar Tipo de Movimiento{% else %}Nuevo Tipo de Movimiento{% endif %}</h1>
+    </div>
 </div>
 
-<div style="background: white; padding: 30px; border-radius: 8px; max-width: 600px;">
-    <form method="post">
-        {% csrf_token %}
-        {% for field in form %}
-        <div class="form-group" style="margin-bottom: 18px;">
-            <label style="display:block; margin-bottom: 6px; font-weight: 500;">{{ field.label }} *</label>
-            {{ field }}
-            {% if field.errors %}
-                <div style="color: #dc3545; font-size: 0.875rem; margin-top: 4px;">{{ field.errors.0 }}</div>
-            {% endif %}
+<div class="card animate-slide-up" style="max-width: 580px;">
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-layer-group" style="color: var(--primary-color); margin-right: 8px;"></i>
+            Datos del Tipo
+        </h3>
+    </div>
+    <div class="card-body">
+        {% if form.errors %}
+        <div class="alert alert-error" style="margin-bottom: 20px;">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>Corrige los errores indicados.</span>
         </div>
-        {% endfor %}
+        {% endif %}
 
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar</button>
-            <a href="{% url 'tipo_inventario_list' %}" class="btn btn-outline"><i class="fas fa-times"></i> Cancelar</a>
-        </div>
-    </form>
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 6px; font-weight: 600;">
+                    Dirección <span style="color: var(--danger);">*</span>
+                </label>
+                {{ form.direccion }}
+                <small style="color: var(--text-gray); display: block; margin-top: 4px;">
+                    <strong>ENTRADA</strong> suma unidades al stock. <strong>SALIDA</strong> las resta.
+                </small>
+                {% if form.direccion.errors %}
+                    <div style="color: var(--danger); font-size: 0.875rem; margin-top: 4px;">{{ form.direccion.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 6px; font-weight: 600;">
+                    Nombre del Tipo <span style="color: var(--danger);">*</span>
+                </label>
+                {{ form.tipo_movimiento }}
+                <small style="color: var(--text-gray); display: block; margin-top: 4px;">
+                    Ej: "Compra a proveedor", "Venta", "Devolución de cliente", "Ajuste de inventario"
+                </small>
+                {% if form.tipo_movimiento.errors %}
+                    <div style="color: var(--danger); font-size: 0.875rem; margin-top: 4px;">{{ form.tipo_movimiento.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group" style="margin-bottom: 24px;">
+                <label style="display: block; margin-bottom: 6px; font-weight: 600;">
+                    Descripción / Categoría <span style="color: var(--danger);">*</span>
+                </label>
+                {{ form.categoria_movimiento }}
+                <small style="color: var(--text-gray); display: block; margin-top: 4px;">
+                    Texto libre para categorizar o describir el tipo. Ej: "Compra", "Venta directa", "Merma"
+                </small>
+                {% if form.categoria_movimiento.errors %}
+                    <div style="color: var(--danger); font-size: 0.875rem; margin-top: 4px;">{{ form.categoria_movimiento.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+                <a href="{% url 'tipo_inventario_list' %}" class="btn btn-outline">
+                    <i class="fas fa-times"></i> Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
 </div>
 {% endblock %}

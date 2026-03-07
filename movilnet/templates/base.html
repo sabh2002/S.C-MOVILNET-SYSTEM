@@ -91,6 +91,12 @@
                 <!-- Inventario -->
                 <li class="menu-section">Inventario</li>
                 <li>
+                    <a href="{% url 'stock_actual' %}" {% if 'stock' in request.path %}class="active"{% endif %}>
+                        <i class="fas fa-boxes"></i>
+                        <span>Stock Actual</span>
+                    </a>
+                </li>
+                <li>
                     <a href="{% url 'movimiento_list' %}" {% if 'movimiento' in request.path %}class="active"{% endif %}>
                         <i class="fas fa-exchange-alt"></i>
                         <span>Movimientos</span>
