@@ -133,6 +133,27 @@
                     </a>
                 </li>
 
+                <!-- Reportes -->
+                <li class="menu-section">Reportes</li>
+                <li>
+                    <a href="{% url 'reporte_inventario' %}" {% if 'reportes/inventario' in request.path %}class="active"{% endif %}>
+                        <i class="fas fa-clipboard-list"></i>
+                        <span>Inventario</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'reporte_movimientos' %}" {% if 'reportes/movimientos' in request.path %}class="active"{% endif %}>
+                        <i class="fas fa-chart-line"></i>
+                        <span>Movimientos</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'reporte_ventas' %}" {% if 'reportes/ventas' in request.path %}class="active"{% endif %}>
+                        <i class="fas fa-cash-register"></i>
+                        <span>Ventas</span>
+                    </a>
+                </li>
+
                 {% if request.user.is_authenticated %}
                     {% if request.user.perfil.rol == 'admin' or request.user.is_superuser %}
                     <!-- Admin -->

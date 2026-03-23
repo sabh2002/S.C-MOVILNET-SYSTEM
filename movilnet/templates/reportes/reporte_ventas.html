@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}Reporte de Ventas - Movilnet System{% endblock %}
+
+{% block content %}
+<!-- Encabezado del reporte -->
+<div class="reporte-header">
+    <h1><i class="fas fa-cash-register"></i> Reporte de Ventas</h1>
+    <p class="reporte-subtitulo">
+        {% if fecha_desde and fecha_hasta %}
+            Periodo: {{ fecha_desde }} al {{ fecha_hasta }}
+        {% elif fecha_desde %}
+            Desde: {{ fecha_desde }}
+        {% elif fecha_hasta %}
+            Hasta: {{ fecha_hasta }}
+        {% else %}
+            Todas las notas de entrega registradas
+        {% endif %}
+    </p>
+    <p class="reporte-fecha">Generado: {% now "d/m/Y H:i" %}</p>
+</div>
+
+<!-- Filtros -->
+<div class="reporte-filtros no-print">
+    <form method="get" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-gray);">Desde</label>
+            <input type="date" name="desde" class="form-control" value="{{ fecha_desde }}" style="min-width: 140px;">
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-gray);">Hasta</label>
+            <input type="date" name="hasta" class="form-control" value="{{ fecha_hasta }}" style="min-width: 140px;">
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-gray);">Cliente</label>
+            <select name="cliente" class="form-control" style="min-width: 180px;">
+                <option value="">Todos</option>
+                {% for cli in clientes %}
+                    <option value="{{ cli.id }}" {% if filtro_cliente == cli.id|stringformat:"s" %}selected{% endif %}>
+                        {{ cli.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filtrar</button>
+        {% if fecha_desde or fecha_hasta or filtro_cliente %}
+        <a href="{% url 'reporte_ventas' %}" class="btn btn-outline"><i class="fas fa-times"></i> Limpiar</a>
+        {% endif %}
+        <button type="button" onclick="window.print()" class="btn btn-imprimir" style="margin-left: auto;">
+            <i class="fas fa-print"></i> Imprimir
+        </button>
+    </form>
+</div>
+
+<!-- Resumen -->
+<div class="reporte-resumen">
+    <div class="resumen-item">
+        <div class="resumen-valor">{{ total_notas }}</div>
+        <div class="resumen-label">Notas de Entrega</div>
+    </div>
+    <div class="resumen-item">
+        <div class="resumen-valor">${{ subtotal_total|floatformat:2 }}</div>
+        <div class="resumen-label">Subtotal</div>
+    </div>
+    <div class="resumen-item">
+        <div class="resumen-valor" style="color: var(--warning);">-${{ descuento_total|floatformat:2 }}</div>
+        <div class="resumen-label">Descuentos</div>
+    </div>
+    <div class="resumen-item" style="border: 2px solid var(--success); border-radius: var(--radius);">
+        <div class="resumen-valor" style="color: var(--success);">${{ total_total|floatformat:2 }}</div>
+        <div class="resumen-label">Total Ventas</div>
+    </div>
+</div>
+
+<!-- Tabla -->
+<div class="reporte-tabla">
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>N. Entrega</th>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Productos</th>
+                <th style="text-align: right;">Subtotal</th>
+                <th style="text-align: right;">Descuento</th>
+                <th style="text-align: right;">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for nota in notas %}
+            <tr>
+                <td style="color: var(--text-light);">{{ forloop.counter }}</td>
+                <td>
+                    <a href="{% url 'nota_entrega_detail' nota.pk %}" style="color: var(--primary-color); font-weight: 600;">
+                        NE-{{ nota.numero_entrega }}
+                    </a>
+                </td>
+                <td style="white-space: nowrap;">{{ nota.fecha_registro|date:"d/m/Y" }}</td>
+                <td><strong>{{ nota.cliente.nombre }}</strong></td>
+                <td style="color: var(--text-gray); font-size: 0.85rem;">
+                    {% for det in nota.detalles.all %}
+                        {{ det.producto.nombre }} (x{{ det.cantidad }}){% if not forloop.last %}, {% endif %}
+                    {% empty %}
+                        <em>Sin detalles</em>
+                    {% endfor %}
+                </td>
+                <td style="text-align: right;">${{ nota.subtotal|floatformat:2 }}</td>
+                <td style="text-align: right; color: var(--warning);">
+                    {% if nota.descuento > 0 %}-${{ nota.descuento|floatformat:2 }}{% else %}—{% endif %}
+                </td>
+                <td style="text-align: right;"><strong>${{ nota.total|floatformat:2 }}</strong></td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" style="text-align: center; padding: 30px; color: var(--text-gray);">
+                    No se encontraron notas de entrega con los filtros seleccionados.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        {% if notas %}
+        <tfoot>
+            <tr>
+                <td colspan="5" style="text-align: right;">Totales:</td>
+                <td style="text-align: right;"><strong>${{ subtotal_total|floatformat:2 }}</strong></td>
+                <td style="text-align: right; color: var(--warning);"><strong>-${{ descuento_total|floatformat:2 }}</strong></td>
+                <td style="text-align: right; color: var(--success);"><strong>${{ total_total|floatformat:2 }}</strong></td>
+            </tr>
+        </tfoot>
+        {% endif %}
+    </table>
+</div>
+
+{% if total_notas > 200 %}
+<div class="alert alert-warning no-print" style="margin-top: 16px;">
+    <i class="fas fa-info-circle"></i>
+    <span>Se muestran las primeras 200 notas. Usa los filtros de fecha para reducir el rango.</span>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Reporte de Inventario - Movilnet System{% endblock %}
+
+{% block content %}
+<!-- Encabezado del reporte -->
+<div class="reporte-header">
+    <h1><i class="fas fa-clipboard-list"></i> Reporte de Inventario Actual</h1>
+    <p class="reporte-subtitulo">Estado de stock de todos los productos activos</p>
+    <p class="reporte-fecha">Generado: {% now "d/m/Y H:i" %}</p>
+</div>
+
+<!-- Filtros (no se imprimen) -->
+<div class="reporte-filtros no-print">
+    <form method="get" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-gray);">Marca</label>
+            <select name="marca" class="form-control" style="min-width: 160px;">
+                <option value="">Todas</option>
+                {% for marca in marcas %}
+                    <option value="{{ marca.id }}" {% if filtro_marca == marca.id|stringformat:"s" %}selected{% endif %}>
+                        {{ marca.nombre_marca }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-gray);">Estado</label>
+            <select name="estado" class="form-control" style="min-width: 140px;">
+                <option value="">Todos</option>
+                <option value="sin_stock" {% if filtro_estado == 'sin_stock' %}selected{% endif %}>Sin Stock</option>
+                <option value="bajo" {% if filtro_estado == 'bajo' %}selected{% endif %}>Stock Bajo</option>
+                <option value="normal" {% if filtro_estado == 'normal' %}selected{% endif %}>Normal</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filtrar</button>
+        {% if filtro_marca or filtro_estado %}
+        <a href="{% url 'reporte_inventario' %}" class="btn btn-outline"><i class="fas fa-times"></i> Limpiar</a>
+        {% endif %}
+        <button type="button" onclick="window.print()" class="btn btn-imprimir" style="margin-left: auto;">
+            <i class="fas fa-print"></i> Imprimir
+        </button>
+    </form>
+</div>
+
+<!-- Resumen -->
+<div class="reporte-resumen">
+    <div class="resumen-item">
+        <div class="resumen-valor">{{ total_productos }}</div>
+        <div class="resumen-label">Productos</div>
+    </div>
+    <div class="resumen-item">
+        <div class="resumen-valor">{{ total_unidades }}</div>
+        <div class="resumen-label">Unidades en Stock</div>
+    </div>
+    <div class="resumen-item">
+        <div class="resumen-valor">${{ valor_total|floatformat:2 }}</div>
+        <div class="resumen-label">Valor Total Inventario</div>
+    </div>
+</div>
+
+<!-- Tabla -->
+<div class="reporte-tabla">
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Producto</th>
+                <th>Marca</th>
+                <th style="text-align: right;">Precio Unit.</th>
+                <th style="text-align: center;">Stock Mín.</th>
+                <th style="text-align: center;">Stock Actual</th>
+                <th style="text-align: center;">Stock Máx.</th>
+                <th style="text-align: center;">Estado</th>
+                <th style="text-align: right;">Valor en Stock</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in productos %}
+            <tr>
+                <td style="color: var(--text-light);">{{ forloop.counter }}</td>
+                <td><strong>{{ p.nombre }}</strong></td>
+                <td>{{ p.marca.nombre_marca }}</td>
+                <td style="text-align: right;">${{ p.precio|floatformat:2 }}</td>
+                <td style="text-align: center;">{{ p.stock_minimo }}</td>
+                <td style="text-align: center;">
+                    <strong style="{% if p.stock_actual == 0 %}color: var(--danger);{% elif p.necesita_reposicion %}color: var(--warning);{% else %}color: var(--success);{% endif %}">
+                        {{ p.stock_actual }}
+                    </strong>
+                </td>
+                <td style="text-align: center;">{{ p.stock_maximo }}</td>
+                <td style="text-align: center;">
+                    {% if p.stock_actual == 0 %}
+                        <span class="badge badge-danger">Sin Stock</span>
+                    {% elif p.necesita_reposicion %}
+                        <span class="badge badge-warning">Bajo</span>
+                    {% elif p.stock_actual >= p.stock_maximo %}
+                        <span class="badge badge-info">Máximo</span>
+                    {% else %}
+                        <span class="badge badge-success">Normal</span>
+                    {% endif %}
+                </td>
+                <td style="text-align: right;">
+                    ${{ p.precio|floatformat:2 }}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9" style="text-align: center; padding: 30px; color: var(--text-gray);">
+                    No se encontraron productos con los filtros seleccionados.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        {% if productos %}
+        <tfoot>
+            <tr>
+                <td colspan="5" style="text-align: right;">Totales:</td>
+                <td style="text-align: center;"><strong>{{ total_unidades }}</strong></td>
+                <td></td>
+                <td></td>
+                <td style="text-align: right;"><strong>${{ valor_total|floatformat:2 }}</strong></td>
+            </tr>
+        </tfoot>
+        {% endif %}
+    </table>
+</div>
+{% endblock %}

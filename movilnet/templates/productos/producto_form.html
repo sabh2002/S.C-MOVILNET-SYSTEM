@@ -47,7 +47,15 @@
 
                     <div class="form-group">
                         <label for="{{ form.marca.id_for_label }}">{{ form.marca.label }} <span class="required">*</span></label>
-                        {{ form.marca }}
+                        <div style="display: flex; gap: 8px; align-items: flex-start;">
+                            <div style="flex: 1;">{{ form.marca }}</div>
+                            <a href="{% url 'marca_create' %}" target="_blank"
+                               class="btn btn-outline"
+                               style="padding: 10px 14px; white-space: nowrap;"
+                               title="Crear nueva marca">
+                                <i class="fas fa-plus"></i>
+                            </a>
+                        </div>
                         {% if form.marca.errors %}
                             <div class="form-error">{{ form.marca.errors }}</div>
                         {% endif %}

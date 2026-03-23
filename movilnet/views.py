@@ -15,8 +15,8 @@ from .models import (
 )
 from .forms import (
     MarcaForm, ProveedorForm, ClienteForm, ProductoForm,
-    LoginForm, CambiarPasswordForm, RecuperarPasswordForm,
-    NuevaPasswordForm, RegistroEmpleadoForm,
+    LoginForm, CambiarPasswordForm, VerificarUsuarioForm,
+    RecuperarPasswordForm, NuevaPasswordForm, RegistroEmpleadoForm,
     TipoInventarioForm, MovimientoInventarioForm,
     CotizacionForm, DetalleCotizacionFormSet,
     OrdenCompraForm, DetalleOrdenCompraFormSet,
@@ -60,13 +60,33 @@ def cambiar_password_view(request):
     return render(request, 'auth/cambiar_password.html', {'form': form})
 
 
-def recuperar_password_view(request):
-    """Vista paso 1: verificar identidad con preguntas de seguridad"""
-    form = RecuperarPasswordForm(request.POST or None)
+def verificar_usuario_view(request):
+    """Paso 1 de recuperación: verificar que el usuario existe"""
+    form = VerificarUsuarioForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
-        request.session['recuperar_user_id'] = form.cleaned_data['user'].pk
+        user = form.cleaned_data['user']
+        request.session['recuperar_user_id'] = user.pk
+        return redirect('recuperar_preguntas')
+    return render(request, 'auth/recuperar_password.html', {'form': form, 'paso': 1})
+
+
+def recuperar_password_view(request):
+    """Paso 2 de recuperación: responder preguntas de seguridad"""
+    user_id = request.session.get('recuperar_user_id')
+    if not user_id:
+        messages.error(request, 'Primero debes ingresar tu nombre de usuario.')
+        return redirect('recuperar_password')
+
+    from django.contrib.auth.models import User
+    user = get_object_or_404(User, pk=user_id)
+    form = RecuperarPasswordForm(request.POST or None, user=user)
+    if request.method == 'POST' and form.is_valid():
         return redirect('nueva_password')
-    return render(request, 'auth/recuperar_password.html', {'form': form})
+    return render(request, 'auth/recuperar_preguntas.html', {
+        'form': form,
+        'username': user.username,
+        'paso': 2
+    })
 
 
 def nueva_password_view(request):
@@ -430,10 +450,16 @@ class MovimientoInventarioCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         movimiento = form.save(commit=False)
-        try:
-            movimiento.empleado = self.request.user.perfil
-        except PerfilEmpleado.DoesNotExist:
-            movimiento.empleado = None
+        # Asegurar que el usuario tenga perfil para registrar quién hizo el movimiento
+        perfil, created = PerfilEmpleado.objects.get_or_create(
+            user=self.request.user,
+            defaults={
+                'rol': 'admin' if self.request.user.is_superuser else 'empleado',
+                'animal_favorito': '-',
+                'color_favorito': '-',
+            }
+        )
+        movimiento.empleado = perfil
 
         producto = movimiento.producto
         tipo = movimiento.tipo_inventario
@@ -542,11 +568,20 @@ class CotizacionCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         context = self.get_context_data()
         detalles = context['detalles']
+        if not detalles.is_valid():
+            messages.error(self.request, 'Corrige los errores en los detalles de la cotización.')
+            return self.form_invalid(form)
         with transaction.atomic():
-            self.object = form.save()
-            if detalles.is_valid():
-                detalles.instance = self.object
-                detalles.save()
+            self.object = form.save(commit=False)
+            self.object.save()
+            detalles.instance = self.object
+            detalles.save()
+            # Calcular total desde los detalles
+            self.object.total = sum(
+                d.cantidad * d.precio_unitario
+                for d in self.object.detalles.all()
+            )
+            self.object.save(update_fields=['total'])
         messages.success(self.request, '¡Cotización creada exitosamente!')
         return redirect(self.success_url)
 
@@ -568,11 +603,19 @@ class CotizacionUpdateView(LoginRequiredMixin, UpdateView):
     def form_valid(self, form):
         context = self.get_context_data()
         detalles = context['detalles']
+        if not detalles.is_valid():
+            messages.error(self.request, 'Corrige los errores en los detalles de la cotización.')
+            return self.form_invalid(form)
         with transaction.atomic():
             self.object = form.save()
-            if detalles.is_valid():
-                detalles.instance = self.object
-                detalles.save()
+            detalles.instance = self.object
+            detalles.save()
+            # Recalcular total
+            self.object.total = sum(
+                d.cantidad * d.precio_unitario
+                for d in self.object.detalles.all()
+            )
+            self.object.save(update_fields=['total'])
         messages.success(self.request, '¡Cotización actualizada exitosamente!')
         return redirect(self.success_url)
 
@@ -618,11 +661,19 @@ class OrdenCompraCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         context = self.get_context_data()
         detalles = context['detalles']
+        if not detalles.is_valid():
+            messages.error(self.request, 'Corrige los errores en los detalles de la orden.')
+            return self.form_invalid(form)
         with transaction.atomic():
             self.object = form.save()
-            if detalles.is_valid():
-                detalles.instance = self.object
-                detalles.save()
+            detalles.instance = self.object
+            detalles.save()
+            # Si ya se registran cantidades recibidas al crear, actualizar stock
+            for detalle in self.object.detalles.all():
+                if detalle.cantidad_recibida > 0:
+                    detalle.producto.stock_actual += detalle.cantidad_recibida
+                    detalle.producto.save(update_fields=['stock_actual'])
+            self.object.actualizar_estado()
         messages.success(self.request, '¡Orden de compra creada exitosamente!')
         return redirect(self.success_url)
 
@@ -644,11 +695,30 @@ class OrdenCompraUpdateView(LoginRequiredMixin, UpdateView):
     def form_valid(self, form):
         context = self.get_context_data()
         detalles = context['detalles']
+        if not detalles.is_valid():
+            messages.error(self.request, 'Corrige los errores en los detalles de la orden.')
+            return self.form_invalid(form)
+
+        # Guardar cantidades recibidas ANTES de la actualización
+        cantidades_previas = {}
+        for detalle in self.object.detalles.all():
+            cantidades_previas[detalle.pk] = detalle.cantidad_recibida
+
         with transaction.atomic():
             self.object = form.save()
-            if detalles.is_valid():
-                detalles.instance = self.object
-                detalles.save()
+            detalles.instance = self.object
+            detalles.save()
+
+            # Calcular la diferencia y ajustar stock
+            for detalle in self.object.detalles.all():
+                cantidad_previa = cantidades_previas.get(detalle.pk, 0)
+                diferencia = detalle.cantidad_recibida - cantidad_previa
+                if diferencia != 0:
+                    detalle.producto.stock_actual += diferencia
+                    detalle.producto.save(update_fields=['stock_actual'])
+
+            self.object.actualizar_estado()
+
         messages.success(self.request, '¡Orden de compra actualizada!')
         return redirect(self.success_url)
 
@@ -701,22 +771,57 @@ class NotaEntregaCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         context = self.get_context_data()
         detalles = context['detalles']
+        if not detalles.is_valid():
+            messages.error(self.request, 'Corrige los errores en los detalles de la nota.')
+            return self.form_invalid(form)
+
+        # Validar stock disponible ANTES de guardar
+        for detalle_form in detalles:
+            if detalle_form.cleaned_data and not detalle_form.cleaned_data.get('DELETE', False):
+                producto = detalle_form.cleaned_data['producto']
+                cantidad = detalle_form.cleaned_data['cantidad']
+                descuento = detalle_form.cleaned_data.get('descuento', 0)
+                precio = detalle_form.cleaned_data.get('precio_unitario', 0)
+
+                if cantidad > producto.stock_actual:
+                    messages.error(
+                        self.request,
+                        f'Stock insuficiente para "{producto.nombre}". '
+                        f'Solicitado: {cantidad}, Disponible: {producto.stock_actual}.'
+                    )
+                    return self.form_invalid(form)
+
+                # Validar que el descuento no supere el valor de la línea
+                valor_linea = cantidad * precio
+                if descuento > valor_linea:
+                    messages.error(
+                        self.request,
+                        f'El descuento (${descuento}) no puede superar el valor '
+                        f'de la línea (${valor_linea}) para "{producto.nombre}".'
+                    )
+                    return self.form_invalid(form)
+
         with transaction.atomic():
             self.object = form.save(commit=False)
             self.object.save()
+            detalles.instance = self.object
+            detalles.save()
 
-            if detalles.is_valid():
-                detalles.instance = self.object
-                detalles.save()
+            # Calcular subtotales por línea, descontar stock y calcular totales
+            subtotal_general = 0
+            for d in self.object.detalles.all():
+                # Calcular y guardar subtotal de la línea
+                d.subtotal = d.cantidad * d.precio_unitario - d.descuento
+                d.save(update_fields=['subtotal'])
+                subtotal_general += d.subtotal
 
-                # Calcular totales
-                subtotal = sum(
-                    (d.cantidad * d.precio_unitario - d.descuento)
-                    for d in self.object.detalles.all()
-                )
-                self.object.subtotal = subtotal
-                self.object.total = subtotal - self.object.descuento
-                self.object.save()
+                # DESCONTAR STOCK
+                d.producto.stock_actual -= d.cantidad
+                d.producto.save(update_fields=['stock_actual'])
+
+            self.object.subtotal = subtotal_general
+            self.object.total = subtotal_general - self.object.descuento
+            self.object.save(update_fields=['subtotal', 'total'])
 
         messages.success(self.request, '¡Nota de entrega creada exitosamente!')
         return redirect(self.success_url)
@@ -739,19 +844,70 @@ class NotaEntregaUpdateView(LoginRequiredMixin, UpdateView):
     def form_valid(self, form):
         context = self.get_context_data()
         detalles = context['detalles']
-        with transaction.atomic():
-            self.object = form.save()
-            if detalles.is_valid():
-                detalles.instance = self.object
-                detalles.save()
+        if not detalles.is_valid():
+            messages.error(self.request, 'Corrige los errores en los detalles de la nota.')
+            return self.form_invalid(form)
 
-                subtotal = sum(
-                    (d.cantidad * d.precio_unitario - d.descuento)
-                    for d in self.object.detalles.all()
-                )
-                self.object.subtotal = subtotal
-                self.object.total = subtotal - self.object.descuento
-                self.object.save()
+        # Guardar cantidades previas para calcular diferencia de stock
+        cantidades_previas = {}
+        for d in self.object.detalles.all():
+            cantidades_previas[d.pk] = {'cantidad': d.cantidad, 'producto_id': d.producto_id}
+
+        # Validar stock para las nuevas cantidades
+        for detalle_form in detalles:
+            if detalle_form.cleaned_data and not detalle_form.cleaned_data.get('DELETE', False):
+                producto = detalle_form.cleaned_data['producto']
+                cantidad_nueva = detalle_form.cleaned_data['cantidad']
+                descuento = detalle_form.cleaned_data.get('descuento', 0)
+                precio = detalle_form.cleaned_data.get('precio_unitario', 0)
+
+                # Calcular stock disponible considerando devolución de la cantidad previa
+                detalle_pk = detalle_form.instance.pk
+                cantidad_previa = cantidades_previas.get(detalle_pk, {}).get('cantidad', 0)
+                stock_disponible = producto.stock_actual + cantidad_previa
+
+                if cantidad_nueva > stock_disponible:
+                    messages.error(
+                        self.request,
+                        f'Stock insuficiente para "{producto.nombre}". '
+                        f'Disponible: {stock_disponible}.'
+                    )
+                    return self.form_invalid(form)
+
+                valor_linea = cantidad_nueva * precio
+                if descuento > valor_linea:
+                    messages.error(
+                        self.request,
+                        f'El descuento (${descuento}) supera el valor de la línea '
+                        f'(${valor_linea}) para "{producto.nombre}".'
+                    )
+                    return self.form_invalid(form)
+
+        with transaction.atomic():
+            # Devolver stock de las líneas previas
+            for d in self.object.detalles.all():
+                d.producto.stock_actual += d.cantidad
+                d.producto.save(update_fields=['stock_actual'])
+
+            self.object = form.save()
+            detalles.instance = self.object
+            detalles.save()
+
+            # Recalcular subtotales y descontar stock nuevo
+            subtotal_general = 0
+            for d in self.object.detalles.all():
+                d.subtotal = d.cantidad * d.precio_unitario - d.descuento
+                d.save(update_fields=['subtotal'])
+                subtotal_general += d.subtotal
+
+                # Descontar stock actualizado
+                d.producto.refresh_from_db()
+                d.producto.stock_actual -= d.cantidad
+                d.producto.save(update_fields=['stock_actual'])
+
+            self.object.subtotal = subtotal_general
+            self.object.total = subtotal_general - self.object.descuento
+            self.object.save(update_fields=['subtotal', 'total'])
 
         messages.success(self.request, '¡Nota de entrega actualizada!')
         return redirect(self.success_url)
@@ -761,3 +917,160 @@ class NotaEntregaDeleteView(LoginRequiredMixin, AdminRequeridoMixin, DeleteView)
     model = NotaEntrega
     template_name = 'notas_entrega/nota_entrega_confirm_delete.html'
     success_url = reverse_lazy('nota_entrega_list')
+
+    def delete(self, request, *args, **kwargs):
+        nota = self.get_object()
+        # Devolver stock de todos los productos de esta nota antes de eliminar
+        with transaction.atomic():
+            for detalle in nota.detalles.all():
+                detalle.producto.stock_actual += detalle.cantidad
+                detalle.producto.save(update_fields=['stock_actual'])
+            nota.delete()
+        messages.success(request, '¡Nota de entrega eliminada y stock devuelto!')
+        return redirect(self.success_url)
+
+
+# ==================== REPORTES ====================
+
+@login_required
+def reporte_inventario_view(request):
+    """Reporte imprimible de inventario actual"""
+    from django.db.models import F, Sum, ExpressionWrapper, DecimalField
+
+    productos = Producto.objects.select_related('marca').filter(estado=True).order_by('marca__nombre_marca', 'nombre')
+
+    # Filtro por marca
+    filtro_marca = request.GET.get('marca', '')
+    if filtro_marca:
+        productos = productos.filter(marca__id=filtro_marca)
+
+    # Filtro por estado de stock
+    filtro_estado = request.GET.get('estado', '')
+    if filtro_estado == 'sin_stock':
+        productos = productos.filter(stock_actual=0)
+    elif filtro_estado == 'bajo':
+        productos = productos.filter(stock_actual__gt=0, stock_actual__lt=F('stock_minimo'))
+    elif filtro_estado == 'normal':
+        productos = productos.filter(stock_actual__gte=F('stock_minimo'), stock_actual__lt=F('stock_maximo'))
+
+    # Calcular valor total del inventario
+    valor_total = productos.aggregate(
+        total=Sum(
+            ExpressionWrapper(
+                F('stock_actual') * F('precio'),
+                output_field=DecimalField()
+            )
+        )
+    )['total'] or 0
+
+    total_unidades = productos.aggregate(total=Sum('stock_actual'))['total'] or 0
+
+    marcas = Marca.objects.filter(estado=True).order_by('nombre_marca')
+
+    context = {
+        'productos': productos,
+        'marcas': marcas,
+        'filtro_marca': filtro_marca,
+        'filtro_estado': filtro_estado,
+        'total_productos': productos.count(),
+        'total_unidades': total_unidades,
+        'valor_total': valor_total,
+    }
+    return render(request, 'reportes/reporte_inventario.html', context)
+
+
+@login_required
+def reporte_movimientos_view(request):
+    """Reporte de movimientos de inventario por rango de fecha"""
+    from django.db.models import Sum
+    from datetime import date, timedelta
+
+    movimientos = MovimientoInventario.objects.select_related(
+        'producto', 'tipo_inventario', 'empleado__user'
+    ).order_by('-fecha_movimiento')
+
+    # Filtros de fecha
+    fecha_desde = request.GET.get('desde', '')
+    fecha_hasta = request.GET.get('hasta', '')
+
+    if fecha_desde:
+        movimientos = movimientos.filter(fecha_movimiento__date__gte=fecha_desde)
+    if fecha_hasta:
+        movimientos = movimientos.filter(fecha_movimiento__date__lte=fecha_hasta)
+
+    # Filtro por dirección
+    filtro_direccion = request.GET.get('direccion', '')
+    if filtro_direccion in ('ENTRADA', 'SALIDA'):
+        movimientos = movimientos.filter(tipo_inventario__direccion=filtro_direccion)
+
+    # Filtro por producto
+    filtro_producto = request.GET.get('producto', '')
+    if filtro_producto:
+        movimientos = movimientos.filter(producto__id=filtro_producto)
+
+    # Calcular totales
+    entradas = movimientos.filter(tipo_inventario__direccion='ENTRADA')
+    salidas = movimientos.filter(tipo_inventario__direccion='SALIDA')
+    total_entradas = entradas.aggregate(t=Sum('cantidad'))['t'] or 0
+    total_salidas = salidas.aggregate(t=Sum('cantidad'))['t'] or 0
+
+    productos = Producto.objects.filter(estado=True).order_by('nombre')
+
+    context = {
+        'movimientos': movimientos[:200],  # Limitar para rendimiento
+        'productos': productos,
+        'fecha_desde': fecha_desde,
+        'fecha_hasta': fecha_hasta,
+        'filtro_direccion': filtro_direccion,
+        'filtro_producto': filtro_producto,
+        'total_movimientos': movimientos.count(),
+        'total_entradas': total_entradas,
+        'total_salidas': total_salidas,
+        'balance_neto': total_entradas - total_salidas,
+    }
+    return render(request, 'reportes/reporte_movimientos.html', context)
+
+
+@login_required
+def reporte_ventas_view(request):
+    """Reporte de ventas (notas de entrega) por periodo"""
+    from django.db.models import Sum, Count
+    from datetime import date
+
+    notas = NotaEntrega.objects.select_related('cliente').prefetch_related('detalles__producto').order_by('-fecha_registro')
+
+    # Filtros de fecha
+    fecha_desde = request.GET.get('desde', '')
+    fecha_hasta = request.GET.get('hasta', '')
+
+    if fecha_desde:
+        notas = notas.filter(fecha_registro__date__gte=fecha_desde)
+    if fecha_hasta:
+        notas = notas.filter(fecha_registro__date__lte=fecha_hasta)
+
+    # Filtro por cliente
+    filtro_cliente = request.GET.get('cliente', '')
+    if filtro_cliente:
+        notas = notas.filter(cliente__id=filtro_cliente)
+
+    # Totales
+    totales = notas.aggregate(
+        subtotal_total=Sum('subtotal'),
+        descuento_total=Sum('descuento'),
+        total_total=Sum('total'),
+    )
+
+    clientes = Cliente.objects.order_by('nombre')
+
+    context = {
+        'notas': notas[:200],
+        'clientes': clientes,
+        'fecha_desde': fecha_desde,
+        'fecha_hasta': fecha_hasta,
+        'filtro_cliente': filtro_cliente,
+        'total_notas': notas.count(),
+        'subtotal_total': totales['subtotal_total'] or 0,
+        'descuento_total': totales['descuento_total'] or 0,
+        'total_total': totales['total_total'] or 0,
+    }
+    return render(request, 'reportes/reporte_ventas.html', context)

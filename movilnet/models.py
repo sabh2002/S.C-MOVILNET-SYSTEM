@@ -301,6 +301,11 @@ class DetalleCotizacion(models.Model):
     cotizacion = models.ForeignKey(Cotizacion, on_delete=models.CASCADE, verbose_name="Cotización", related_name="detalles")
     producto = models.ForeignKey(Producto, on_delete=models.PROTECT, verbose_name="Producto", related_name="detalles_cotizacion")
     cantidad = models.IntegerField(validators=[MinValueValidator(1)], verbose_name="Cantidad")
+    precio_unitario = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0,
+        validators=[MinValueValidator(0)],
+        verbose_name="Precio Unitario"
+    )
     fecha_registro = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Registro")
 
     class Meta:
@@ -310,12 +315,24 @@ class DetalleCotizacion(models.Model):
     def __str__(self):
         return f"{self.producto.nombre} x{self.cantidad}"
 
+    @property
+    def subtotal(self):
+        return self.cantidad * self.precio_unitario
+
 
 class OrdenCompra(models.Model):
     """Modelo para gestionar órdenes de compra"""
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('parcial', 'Parcialmente Recibida'),
+        ('recibida', 'Recibida'),
+        ('cancelada', 'Cancelada'),
+    ]
+
     cotizacion = models.ForeignKey(Cotizacion, on_delete=models.PROTECT, verbose_name="Cotización", related_name="ordenes_compra")
     numero_orden = models.CharField(max_length=50, unique=True, verbose_name="Número de Orden")
     fecha_orden = models.DateField(verbose_name="Fecha de Orden")
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente', verbose_name="Estado")
     fecha_registro = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Registro")
 
     class Meta:
@@ -325,6 +342,21 @@ class OrdenCompra(models.Model):
 
     def __str__(self):
         return f"OC-{self.numero_orden}"
+
+    def actualizar_estado(self):
+        """Actualiza el estado según las cantidades recibidas vs solicitadas"""
+        detalles = self.detalles.all()
+        if not detalles.exists():
+            return
+        total_solicitado = sum(d.cantidad_solicitada for d in detalles)
+        total_recibido = sum(d.cantidad_recibida for d in detalles)
+        if total_recibido == 0:
+            self.estado = 'pendiente'
+        elif total_recibido >= total_solicitado:
+            self.estado = 'recibida'
+        else:
+            self.estado = 'parcial'
+        self.save(update_fields=['estado'])
 
 
 class DetalleOrdenCompra(models.Model):

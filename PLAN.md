@@ -156,24 +156,19 @@ productos, proveedores, clientes, movimientos de inventario, cotizaciones a prov
 
 ### MÓDULO: Cotizaciones
 
-**Estado:** 🔴 Incompleto — datos críticos ausentes
+**Estado:** ✅ Corregido
 
 #### Implementado
 - [x] CRUD completo de cotizaciones
-- [x] Detalles de cotización (productos y cantidades)
+- [x] Detalles de cotización (productos, cantidades y **precio unitario**)
 - [x] Estados: Pendiente, Aprobada, Rechazada, Vencida
 - [x] Vista de detalle
 - [x] Formulario con formset inline
+- [x] **`precio_unitario` en `DetalleCotizacion`** — corregido en Fase 1
+- [x] **`total` se calcula automáticamente** desde los detalles — corregido en Fase 1
+- [x] **Formset inválido ya no guarda el padre** — corregido en Fase 1
 
-#### Problemas críticos
-- [ ] `DetalleCotizacion` no tiene `precio_unitario` — el total de la cotización siempre es 0
-- [ ] `Cotizacion.total` nunca se calcula — siempre es 0
-- [ ] No hay validación de que el formset sea válido antes de guardar el padre
-
-#### Pendiente — Fase 1
-- [ ] Agregar `precio_unitario` a `DetalleCotizacion`
-- [ ] Calcular `total` de cotización automáticamente desde los detalles
-- [ ] Corregir guardado del padre cuando formset es inválido
+#### Pendiente — Fase 4
 - [ ] Mostrar total calculado en el formulario en tiempo real (JS)
 
 ---
@@ -188,47 +183,38 @@ productos, proveedores, clientes, movimientos de inventario, cotizaciones a prov
 - [x] Asociación con cotización base
 - [x] Vista de detalle
 
-#### Problemas críticos
-- [ ] Sin campo `estado` (Pendiente / Parcialmente Recibida / Recibida / Cancelada)
-- [ ] Recibir mercancía (`cantidad_recibida`) no actualiza el stock del producto
-- [ ] Se puede crear OC desde una cotización rechazada o vencida
-- [ ] No hay validación que los productos de la OC correspondan a los de la cotización
-- [ ] No hay `precio_unitario` en el detalle — no se sabe el costo de la compra
+#### Corregido en Fase 1
+- [x] **Campo `estado`** agregado: Pendiente / Parcialmente Recibida / Recibida / Cancelada
+- [x] **Recibir mercancía actualiza stock** automáticamente (diferencia al editar)
+- [x] **Solo cotizaciones aprobadas** disponibles al crear OC
+- [x] **Formset inválido ya no guarda el padre**
+- [x] **Estado se actualiza automáticamente** según cantidades recibidas vs solicitadas
 
-#### Pendiente — Fase 1 y 3
-- [ ] Agregar campo `estado` a `OrdenCompra`
-- [ ] Al actualizar `cantidad_recibida`, crear movimiento de entrada automático
-- [ ] Filtrar cotizaciones disponibles para OC: solo estado `aprobada`
+#### Pendiente — Fase 3
 - [ ] Agregar `precio_unitario` a `DetalleOrdenCompra`
-- [ ] Corregir guardado del padre cuando formset es inválido
 - [ ] Numeración automática de órdenes (OC-2026-001)
+- [ ] Pre-poblar detalles de OC desde la cotización base
 
 ---
 
 ### MÓDULO: Notas de Entrega (Ventas)
 
-**Estado:** 🔴 Crítico — no descuenta stock
+**Estado:** ✅ Corregido
 
 #### Implementado
 - [x] CRUD completo de notas de entrega
 - [x] Detalles con cantidad, precio unitario, descuento
-- [x] Cálculo parcial de totales (con errores)
 - [x] Vista de detalle
 
-#### Problemas críticos
-- [ ] Crear una NE **no descuenta el stock** de los productos vendidos
-- [ ] No se valida que haya stock suficiente antes de confirmar la venta
-- [ ] `DetalleNotaEntrega.subtotal` nunca se calcula ni guarda
-- [ ] La fórmula de descuento puede producir subtotales negativos
-- [ ] No hay control de que el descuento por línea no supere el valor de la línea
+#### Corregido en Fase 1
+- [x] **Crear NE descuenta el stock** de los productos vendidos
+- [x] **Validación de stock disponible** antes de confirmar la venta
+- [x] **`DetalleNotaEntrega.subtotal` se calcula y guarda** correctamente
+- [x] **Descuento por línea validado** para no superar el valor de la línea
+- [x] **Al editar NE**, se ajusta la diferencia de stock (devuelve previo, descuenta nuevo)
+- [x] **Al eliminar NE**, se devuelve el stock de todos los productos
 
-#### Pendiente — Fase 1
-- [ ] Al crear NE, validar stock disponible por producto
-- [ ] Al crear NE, descontar stock de cada producto vendido
-- [ ] Al editar NE, ajustar la diferencia de stock correctamente
-- [ ] Al eliminar NE, devolver el stock
-- [ ] Calcular y guardar `DetalleNotaEntrega.subtotal` correctamente
-- [ ] Validar que el descuento por línea ≤ (cantidad × precio_unitario)
+#### Pendiente — Fase 3
 - [ ] Numeración automática de notas (NE-2026-001)
 
 ---

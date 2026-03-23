@@ -1107,3 +1107,157 @@ textarea.form-control {
     transform: translateY(-3px);
     box-shadow: var(--shadow-md);
 }
+
+/* ============================================
+   REPORTES - ESTILOS DE IMPRESIÓN
+   ============================================ */
+.reporte-header {
+    text-align: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.reporte-header h1 {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    margin-bottom: 4px;
+}
+
+.reporte-header .reporte-subtitulo {
+    color: var(--text-gray);
+    font-size: 0.9rem;
+}
+
+.reporte-header .reporte-fecha {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-top: 4px;
+}
+
+.reporte-filtros {
+    background: var(--white);
+    padding: 16px 20px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 20px;
+}
+
+.reporte-resumen {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.reporte-resumen .resumen-item {
+    background: var(--white);
+    padding: 16px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    text-align: center;
+}
+
+.reporte-resumen .resumen-valor {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.reporte-resumen .resumen-label {
+    font-size: 0.78rem;
+    color: var(--text-gray);
+    margin-top: 2px;
+}
+
+.reporte-tabla {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+.reporte-tabla table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.reporte-tabla th {
+    background: var(--bg-dark);
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.reporte-tabla td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.88rem;
+}
+
+.reporte-tabla tfoot td {
+    font-weight: 700;
+    background: var(--bg-light);
+    border-top: 2px solid var(--border-color);
+}
+
+.btn-imprimir {
+    background: var(--text-dark);
+    color: white;
+}
+
+.btn-imprimir:hover {
+    background: #1a202c;
+    color: white;
+}
+
+/* Impresión */
+@media print {
+    body {
+        background: white !important;
+        font-size: 11pt;
+    }
+
+    .sidebar, .page-header a, .btn, .reporte-filtros,
+    .btn-imprimir, .no-print {
+        display: none !important;
+    }
+
+    .main-content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+    }
+
+    .admin-wrapper {
+        display: block !important;
+    }
+
+    .reporte-header {
+        border-bottom: 2px solid #333;
+    }
+
+    .reporte-header h1 {
+        color: #333;
+    }
+
+    .reporte-tabla, .reporte-resumen .resumen-item {
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+
+    .reporte-tabla th {
+        background: #f0f0f0 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .badge {
+        border: 1px solid #999;
+        padding: 2px 6px;
+    }
+}

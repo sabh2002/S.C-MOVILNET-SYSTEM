@@ -6,7 +6,8 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('cambiar-password/', views.cambiar_password_view, name='cambiar_password'),
-    path('recuperar-password/', views.recuperar_password_view, name='recuperar_password'),
+    path('recuperar-password/', views.verificar_usuario_view, name='recuperar_password'),
+    path('recuperar-password/preguntas/', views.recuperar_password_view, name='recuperar_preguntas'),
     path('nueva-password/', views.nueva_password_view, name='nueva_password'),
     path('perfil/', views.perfil_view, name='perfil'),
     path('empleados/', views.lista_empleados_view, name='lista_empleados'),
@@ -70,4 +71,9 @@ urlpatterns = [
     path('notas-entrega/<int:pk>/', views.NotaEntregaDetailView.as_view(), name='nota_entrega_detail'),
     path('notas-entrega/editar/<int:pk>/', views.NotaEntregaUpdateView.as_view(), name='nota_entrega_update'),
     path('notas-entrega/eliminar/<int:pk>/', views.NotaEntregaDeleteView.as_view(), name='nota_entrega_delete'),
+
+    # URLs Reportes
+    path('reportes/inventario/', views.reporte_inventario_view, name='reporte_inventario'),
+    path('reportes/movimientos/', views.reporte_movimientos_view, name='reporte_movimientos'),
+    path('reportes/ventas/', views.reporte_ventas_view, name='reporte_ventas'),
 ]

@@ -128,7 +128,12 @@ class ClienteForm(forms.ModelForm):
         fields = ['nombre', 'telefono', 'direccion']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. Juan Pérez'}),
-            'telefono': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. 0424-1234567'}),
+            'telefono': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej. 0424-1234567',
+                'pattern': r'[0-9\-\+\(\)\s]+',
+                'title': 'Solo se permiten números, guiones, espacios y paréntesis'
+            }),
             'direccion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Dirección completa'}),
         }
 
@@ -139,6 +144,22 @@ class ClienteForm(forms.ModelForm):
             if len(cedula_parts) == 2:
                 self.fields['tipo_cedula'].initial = cedula_parts[0]
                 self.fields['numero_cedula'].initial = cedula_parts[1]
+
+    def clean_telefono(self):
+        import re
+        telefono = self.cleaned_data.get('telefono', '')
+        # Eliminar espacios para validar
+        limpio = telefono.strip()
+        if not limpio:
+            raise forms.ValidationError('El teléfono es obligatorio.')
+        # Solo permitir dígitos, guiones, +, paréntesis y espacios
+        if not re.match(r'^[\d\-\+\(\)\s]+$', limpio):
+            raise forms.ValidationError('El teléfono solo puede contener números, guiones (-), espacios y paréntesis.')
+        # Verificar que tenga al menos 7 dígitos
+        solo_digitos = re.sub(r'[^\d]', '', limpio)
+        if len(solo_digitos) < 7:
+            raise forms.ValidationError('El teléfono debe tener al menos 7 dígitos.')
+        return limpio
 
     def clean_numero_cedula(self):
         numero = self.cleaned_data.get('numero_cedula', '')
@@ -250,11 +271,31 @@ class CambiarPasswordForm(forms.Form):
         return cleaned_data
 
 
-class RecuperarPasswordForm(forms.Form):
+class VerificarUsuarioForm(forms.Form):
+    """Paso 1: Verificar que el usuario existe antes de mostrar preguntas de seguridad"""
     username = forms.CharField(
-        label='Usuario',
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de usuario'})
+        label='Nombre de usuario',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ingresa tu nombre de usuario'})
     )
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        try:
+            user = User.objects.get(username=username)
+            # Verificar que tenga perfil con preguntas de seguridad
+            perfil = user.perfil
+            if not perfil.animal_favorito or not perfil.color_favorito:
+                raise forms.ValidationError('Este usuario no tiene preguntas de seguridad configuradas.')
+            self.cleaned_data['user'] = user
+        except User.DoesNotExist:
+            raise forms.ValidationError('El usuario ingresado no existe en el sistema.')
+        except PerfilEmpleado.DoesNotExist:
+            raise forms.ValidationError('Este usuario no tiene un perfil de empleado registrado.')
+        return username
+
+
+class RecuperarPasswordForm(forms.Form):
+    """Paso 2: Preguntas de seguridad (el usuario ya fue validado en el paso anterior)"""
     animal_favorito = forms.CharField(
         label='¿Cuál es tu animal favorito?',
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Animal favorito'})
@@ -264,23 +305,24 @@ class RecuperarPasswordForm(forms.Form):
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Color favorito'})
     )
 
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+
     def clean(self):
         cleaned_data = super().clean()
-        username = cleaned_data.get('username')
+        if not self.user:
+            raise forms.ValidationError('Sesión expirada. Vuelve al paso anterior.')
+
         animal = cleaned_data.get('animal_favorito', '').strip().lower()
         color = cleaned_data.get('color_favorito', '').strip().lower()
-        if username:
-            try:
-                user = User.objects.get(username=username)
-                perfil = user.perfil
-                if perfil.animal_favorito.strip().lower() != animal or \
-                   perfil.color_favorito.strip().lower() != color:
-                    raise forms.ValidationError('Las respuestas de seguridad no coinciden.')
-                cleaned_data['user'] = user
-            except User.DoesNotExist:
-                raise forms.ValidationError('El usuario no existe.')
-            except PerfilEmpleado.DoesNotExist:
-                raise forms.ValidationError('Este usuario no tiene perfil de empleado.')
+        perfil = self.user.perfil
+
+        if perfil.animal_favorito.strip().lower() != animal or \
+           perfil.color_favorito.strip().lower() != color:
+            raise forms.ValidationError('Las respuestas de seguridad no coinciden.')
+
+        cleaned_data['user'] = self.user
         return cleaned_data
 
 
@@ -384,10 +426,10 @@ class TipoInventarioForm(forms.ModelForm):
 class MovimientoInventarioForm(forms.ModelForm):
     class Meta:
         model = MovimientoInventario
-        fields = ['producto', 'tipo_inventario', 'cantidad', 'observaciones']
+        fields = ['tipo_inventario', 'producto', 'cantidad', 'observaciones']
         widgets = {
-            'producto': forms.Select(attrs={'class': 'form-control'}),
             'tipo_inventario': forms.Select(attrs={'class': 'form-control'}),
+            'producto': forms.Select(attrs={'class': 'form-control'}),
             'cantidad': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '1', 'min': '1'}),
             'observaciones': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Observaciones del movimiento'}),
         }
@@ -411,10 +453,11 @@ class CotizacionForm(forms.ModelForm):
 class DetalleCotizacionForm(forms.ModelForm):
     class Meta:
         model = DetalleCotizacion
-        fields = ['producto', 'cantidad']
+        fields = ['producto', 'cantidad', 'precio_unitario']
         widgets = {
             'producto': forms.Select(attrs={'class': 'form-control'}),
             'cantidad': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}),
+            'precio_unitario': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'placeholder': '0.00'}),
         }
 
 
@@ -431,12 +474,21 @@ DetalleCotizacionFormSet = inlineformset_factory(
 class OrdenCompraForm(forms.ModelForm):
     class Meta:
         model = OrdenCompra
-        fields = ['cotizacion', 'numero_orden', 'fecha_orden']
+        fields = ['cotizacion', 'numero_orden', 'fecha_orden', 'estado']
         widgets = {
             'cotizacion': forms.Select(attrs={'class': 'form-control'}),
             'numero_orden': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. OC-001'}),
             'fecha_orden': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'estado': forms.Select(attrs={'class': 'form-control'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Solo mostrar cotizaciones aprobadas (y la actual si estamos editando)
+        qs = Cotizacion.objects.filter(estado='aprobada').select_related('proveedor')
+        if self.instance and self.instance.pk and self.instance.cotizacion_id:
+            qs = qs | Cotizacion.objects.filter(pk=self.instance.cotizacion_id)
+        self.fields['cotizacion'].queryset = qs
 
 
 class DetalleOrdenCompraForm(forms.ModelForm):

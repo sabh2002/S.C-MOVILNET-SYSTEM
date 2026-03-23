@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block title %}Reporte de Movimientos - Movilnet System{% endblock %}
+
+{% block content %}
+<!-- Encabezado del reporte -->
+<div class="reporte-header">
+    <h1><i class="fas fa-chart-line"></i> Reporte de Movimientos de Inventario</h1>
+    <p class="reporte-subtitulo">
+        {% if fecha_desde and fecha_hasta %}
+            Periodo: {{ fecha_desde }} al {{ fecha_hasta }}
+        {% elif fecha_desde %}
+            Desde: {{ fecha_desde }}
+        {% elif fecha_hasta %}
+            Hasta: {{ fecha_hasta }}
+        {% else %}
+            Todos los movimientos registrados
+        {% endif %}
+    </p>
+    <p class="reporte-fecha">Generado: {% now "d/m/Y H:i" %}</p>
+</div>
+
+<!-- Filtros -->
+<div class="reporte-filtros no-print">
+    <form method="get" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-gray);">Desde</label>
+            <input type="date" name="desde" class="form-control" value="{{ fecha_desde }}" style="min-width: 140px;">
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-gray);">Hasta</label>
+            <input type="date" name="hasta" class="form-control" value="{{ fecha_hasta }}" style="min-width: 140px;">
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-gray);">Dirección</label>
+            <select name="direccion" class="form-control" style="min-width: 130px;">
+                <option value="">Todas</option>
+                <option value="ENTRADA" {% if filtro_direccion == 'ENTRADA' %}selected{% endif %}>Entradas</option>
+                <option value="SALIDA" {% if filtro_direccion == 'SALIDA' %}selected{% endif %}>Salidas</option>
+            </select>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-gray);">Producto</label>
+            <select name="producto" class="form-control" style="min-width: 160px;">
+                <option value="">Todos</option>
+                {% for prod in productos %}
+                    <option value="{{ prod.id }}" {% if filtro_producto == prod.id|stringformat:"s" %}selected{% endif %}>
+                        {{ prod.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filtrar</button>
+        {% if fecha_desde or fecha_hasta or filtro_direccion or filtro_producto %}
+        <a href="{% url 'reporte_movimientos' %}" class="btn btn-outline"><i class="fas fa-times"></i> Limpiar</a>
+        {% endif %}
+        <button type="button" onclick="window.print()" class="btn btn-imprimir" style="margin-left: auto;">
+            <i class="fas fa-print"></i> Imprimir
+        </button>
+    </form>
+</div>
+
+<!-- Resumen -->
+<div class="reporte-resumen">
+    <div class="resumen-item">
+        <div class="resumen-valor">{{ total_movimientos }}</div>
+        <div class="resumen-label">Total Movimientos</div>
+    </div>
+    <div class="resumen-item">
+        <div class="resumen-valor" style="color: var(--success);">+{{ total_entradas }}</div>
+        <div class="resumen-label">Unidades Ingresadas</div>
+    </div>
+    <div class="resumen-item">
+        <div class="resumen-valor" style="color: var(--danger);">-{{ total_salidas }}</div>
+        <div class="resumen-label">Unidades Egresadas</div>
+    </div>
+    <div class="resumen-item">
+        <div class="resumen-valor" style="color: {% if balance_neto >= 0 %}var(--success){% else %}var(--danger){% endif %};">
+            {% if balance_neto > 0 %}+{% endif %}{{ balance_neto }}
+        </div>
+        <div class="resumen-label">Balance Neto</div>
+    </div>
+</div>
+
+<!-- Tabla -->
+<div class="reporte-tabla">
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Fecha</th>
+                <th>Producto</th>
+                <th>Tipo</th>
+                <th style="text-align: center;">Cantidad</th>
+                <th>Empleado</th>
+                <th>Observaciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for mov in movimientos %}
+            <tr>
+                <td style="color: var(--text-light);">{{ forloop.counter }}</td>
+                <td style="white-space: nowrap;">{{ mov.fecha_movimiento|date:"d/m/Y H:i" }}</td>
+                <td><strong>{{ mov.producto.nombre }}</strong></td>
+                <td>
+                    {% if mov.tipo_inventario.direccion == 'ENTRADA' %}
+                        <span class="badge badge-success">
+                            <i class="fas fa-arrow-circle-down"></i> {{ mov.tipo_inventario.tipo_movimiento }}
+                        </span>
+                    {% else %}
+                        <span class="badge badge-danger">
+                            <i class="fas fa-arrow-circle-up"></i> {{ mov.tipo_inventario.tipo_movimiento }}
+                        </span>
+                    {% endif %}
+                </td>
+                <td style="text-align: center;">
+                    {% if mov.tipo_inventario.direccion == 'ENTRADA' %}
+                        <strong style="color: var(--success);">+{{ mov.cantidad }}</strong>
+                    {% else %}
+                        <strong style="color: var(--danger);">-{{ mov.cantidad }}</strong>
+                    {% endif %}
+                </td>
+                <td>{{ mov.empleado.user.get_full_name|default:mov.empleado.user.username|default:"—" }}</td>
+                <td style="color: var(--text-gray); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    {{ mov.observaciones|default:"—" }}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 30px; color: var(--text-gray);">
+                    No se encontraron movimientos con los filtros seleccionados.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        {% if movimientos %}
+        <tfoot>
+            <tr>
+                <td colspan="4" style="text-align: right;">Totales del periodo:</td>
+                <td style="text-align: center;">
+                    <span style="color: var(--success);">+{{ total_entradas }}</span>
+                     /
+                    <span style="color: var(--danger);">-{{ total_salidas }}</span>
+                </td>
+                <td colspan="2"></td>
+            </tr>
+        </tfoot>
+        {% endif %}
+    </table>
+</div>
+
+{% if total_movimientos > 200 %}
+<div class="alert alert-warning no-print" style="margin-top: 16px;">
+    <i class="fas fa-info-circle"></i>
+    <span>Se muestran los primeros 200 movimientos. Usa los filtros de fecha para reducir el rango.</span>
+</div>
+{% endif %}
+{% endblock %}

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recuperar Contraseña - Movilnet System</title>
+    <title>Preguntas de Seguridad - Movilnet System</title>
     <link rel="stylesheet" href="{% static 'style.css' %}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -15,19 +15,19 @@
             <i class="fas fa-signal"></i> movilnet
         </div>
         <h3 style="text-align:center; color: var(--text-dark); margin-bottom: 8px; font-size: 1.1rem;">
-            Recuperar Contraseña
+            Preguntas de Seguridad
         </h3>
         <p style="text-align:center; color: var(--text-gray); font-size: 0.85rem; margin-bottom: 6px;">
-            Paso 1 de 3
+            Paso 2 de 3
         </p>
         <p style="text-align:center; color: var(--text-gray); font-size: 0.85rem; margin-bottom: 20px;">
-            Ingresa tu nombre de usuario para verificar tu identidad.
+            Respondé las preguntas de seguridad para el usuario <strong>{{ username }}</strong>.
         </p>
 
         <!-- Indicador de pasos -->
         <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 24px;">
+            <div style="width: 40px; height: 4px; border-radius: 2px; background: var(--success);"></div>
             <div style="width: 40px; height: 4px; border-radius: 2px; background: var(--primary-color);"></div>
-            <div style="width: 40px; height: 4px; border-radius: 2px; background: var(--border-color);"></div>
             <div style="width: 40px; height: 4px; border-radius: 2px; background: var(--border-color);"></div>
         </div>
 
@@ -43,23 +43,34 @@
 
             <div class="form-group" style="margin-bottom: 14px;">
                 <label style="display:block; margin-bottom: 6px; color: var(--text-dark); font-size: 0.9rem; font-weight: 600;">
-                    <i class="fas fa-user" style="color: var(--text-gray); margin-right: 4px;"></i>
-                    Nombre de usuario
+                    <i class="fas fa-paw" style="color: var(--text-gray); margin-right: 4px;"></i>
+                    ¿Cuál es tu animal favorito?
                 </label>
-                {{ form.username }}
-                {% if form.username.errors %}
-                    <div style="color: #dc3545; font-size: 0.8rem; margin-top: 4px;">{{ form.username.errors.0 }}</div>
+                {{ form.animal_favorito }}
+                {% if form.animal_favorito.errors %}
+                    <div style="color: #dc3545; font-size: 0.8rem; margin-top: 4px;">{{ form.animal_favorito.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group" style="margin-bottom: 14px;">
+                <label style="display:block; margin-bottom: 6px; color: var(--text-dark); font-size: 0.9rem; font-weight: 600;">
+                    <i class="fas fa-palette" style="color: var(--text-gray); margin-right: 4px;"></i>
+                    ¿Cuál es tu color favorito?
+                </label>
+                {{ form.color_favorito }}
+                {% if form.color_favorito.errors %}
+                    <div style="color: #dc3545; font-size: 0.8rem; margin-top: 4px;">{{ form.color_favorito.errors.0 }}</div>
                 {% endif %}
             </div>
 
             <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
-                Continuar <i class="fas fa-arrow-right"></i>
+                <i class="fas fa-check"></i> Verificar identidad
             </button>
         </form>
 
         <div style="margin-top: 16px; text-align: center; font-size: 0.875rem;">
-            <a href="{% url 'login' %}" style="color: var(--text-gray);">
-                <i class="fas fa-arrow-left"></i> Volver al login
+            <a href="{% url 'recuperar_password' %}" style="color: var(--text-gray);">
+                <i class="fas fa-arrow-left"></i> Volver al paso anterior
             </a>
         </div>
     </div>
