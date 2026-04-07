@@ -224,12 +224,12 @@ class TipoInventario(models.Model):
         ('SALIDA', 'Salida (resta stock)'),
     ]
 
-    tipo_movimiento = models.CharField(max_length=50, verbose_name="Nombre del Tipo")
-    categoria_movimiento = models.CharField(max_length=50, verbose_name="Descripción / Categoría")
+    tipo_movimiento = models.CharField(max_length=50, verbose_name="Nombre")
+    categoria_movimiento = models.CharField(max_length=50, verbose_name="Descripción")
     direccion = models.CharField(
         max_length=10,
         choices=DIRECCION_CHOICES,
-        verbose_name="Dirección",
+        verbose_name="Tipo",
         help_text="ENTRADA suma unidades al stock. SALIDA las resta."
     )
 

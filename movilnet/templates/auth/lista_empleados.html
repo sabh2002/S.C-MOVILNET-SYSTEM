@@ -14,11 +14,12 @@
     <table style="width: 100%; border-collapse: collapse;">
         <thead>
             <tr style="background-color: var(--bg-light); border-bottom: 2px solid var(--border-color);">
-                <th style="padding: 12px 16px; text-align: left; font-size: 0.85rem; color: var(--text-gray);">Usuario</th>
+                <th style="padding: 12px 16px; text-align: left; font-size: 0.85rem; color: var(--text-gray);">Cédula</th>
                 <th style="padding: 12px 16px; text-align: left; font-size: 0.85rem; color: var(--text-gray);">Nombre</th>
+                <th style="padding: 12px 16px; text-align: left; font-size: 0.85rem; color: var(--text-gray);">Apellido</th>
                 <th style="padding: 12px 16px; text-align: left; font-size: 0.85rem; color: var(--text-gray);">Rol</th>
                 <th style="padding: 12px 16px; text-align: left; font-size: 0.85rem; color: var(--text-gray);">Estado</th>
-                <th style="padding: 12px 16px; text-align: left; font-size: 0.85rem; color: var(--text-gray);">Fecha Registro</th>
+                <th style="padding: 12px 16px; text-align: right; font-size: 0.85rem; color: var(--text-gray);">Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -26,17 +27,14 @@
             <tr style="border-bottom: 1px solid var(--border-color);">
                 <td style="padding: 12px 16px;">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <div style="width: 32px; height: 32px; border-radius: 50%; background-color: var(--primary-color);
-                                    display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem;">
-                            {{ empleado.user.username|first|upper }}
-                        </div>
                         <span style="font-weight: 500;">{{ empleado.user.username }}</span>
                         {% if empleado.user == request.user %}
                             <span style="font-size: 0.75rem; color: var(--primary-color);">(tú)</span>
                         {% endif %}
                     </div>
                 </td>
-                <td style="padding: 12px 16px;">{{ empleado.user.first_name }} {{ empleado.user.last_name }}</td>
+                <td style="padding: 12px 16px;">{{ empleado.user.first_name }}</td>
+                <td style="padding: 12px 16px;">{{ empleado.user.last_name }}</td>
                 <td style="padding: 12px 16px;">
                     <span style="background-color: {% if empleado.rol == 'admin' %}#dc354520{% else %}#28a74520{% endif %};
                                  color: {% if empleado.rol == 'admin' %}#dc3545{% else %}#28a745{% endif %};
@@ -46,13 +44,28 @@
                 </td>
                 <td style="padding: 12px 16px;">
                     {% if empleado.user.is_active %}
-                        <span style="color: var(--success);">Activo</span>
+                        <span style="color: var(--success);"><i class="fas fa-check-circle"></i> Activo</span>
                     {% else %}
-                        <span style="color: var(--danger);">Inactivo</span>
+                        <span style="color: var(--danger);"><i class="fas fa-times-circle"></i> Inactivo</span>
                     {% endif %}
                 </td>
-                <td style="padding: 12px 16px; color: var(--text-gray); font-size: 0.875rem;">
-                    {{ empleado.user.date_joined|date:"d/m/Y" }}
+                <td style="padding: 12px 16px; text-align: right;">
+                    <div style="display: flex; gap: 5px; justify-content: flex-end;">
+                        <a href="{% url 'empleado_detail' empleado.pk %}" class="btn btn-sm" style="background:var(--bg-light); color:var(--text-color); border:1px solid var(--border-color); padding:5px 8px; border-radius:4px;" title="Ver Detalle">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{% url 'empleado_update' empleado.pk %}" class="btn btn-sm" style="background:var(--info); color:white; border:none; padding:5px 8px; border-radius:4px;" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        {% if empleado.user != request.user %}
+                        <a href="{% url 'empleado_toggle_activo' empleado.pk %}" class="btn btn-sm" style="background:var(--warning); color:#fff; border:none; padding:5px 8px; border-radius:4px;" title="Activar/Desactivar">
+                            <i class="fas fa-power-off"></i>
+                        </a>
+                        <a href="{% url 'empleado_delete' empleado.pk %}" class="btn btn-sm" style="background:var(--danger); color:white; border:none; padding:5px 8px; border-radius:4px;" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                        {% endif %}
+                    </div>
                 </td>
             </tr>
             {% empty %}

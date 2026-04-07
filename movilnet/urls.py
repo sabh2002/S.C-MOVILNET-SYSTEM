@@ -12,6 +12,10 @@ urlpatterns = [
     path('perfil/', views.perfil_view, name='perfil'),
     path('empleados/', views.lista_empleados_view, name='lista_empleados'),
     path('empleados/registro/', views.registro_empleado_view, name='registro_empleado'),
+    path('empleados/<int:pk>/', views.EmpleadoDetailView.as_view(), name='empleado_detail'),
+    path('empleados/editar/<int:pk>/', views.EmpleadoUpdateView.as_view(), name='empleado_update'),
+    path('empleados/eliminar/<int:pk>/', views.EmpleadoDeleteView.as_view(), name='empleado_delete'),
+    path('empleados/alternar-estado/<int:pk>/', views.empleado_toggle_activo_view, name='empleado_toggle_activo'),
 
     # Dashboard
     path('', views.dashboard, name='dashboard'),

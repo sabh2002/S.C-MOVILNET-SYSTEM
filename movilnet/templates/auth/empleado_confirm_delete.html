@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar Empleado - Movilnet System{% endblock %}
+
+{% block content %}
+<div class="header-section" style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
+    <h1 class="header-title"><i class="fas fa-trash-alt"></i> Eliminar Empleado</h1>
+    <a href="{% url 'lista_empleados' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Volver a la Lista
+    </a>
+</div>
+
+<div class="form-container" style="background: white; padding: 40px; border-radius: 8px; max-width: 500px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.05); text-align: center;">
+    
+    <div style="font-size: 3rem; color: var(--danger); margin-bottom: 20px;">
+        <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    
+    <h2 style="margin-bottom: 15px; color: var(--text-color);">¿Estás seguro de eliminar a este empleado?</h2>
+    
+    <p style="color: var(--text-gray); margin-bottom: 30px; font-size: 1.05rem;">
+        Al eliminar al empleado <strong>{{ object.user.first_name }} {{ object.user.last_name }}</strong> (Cédula: {{ object.user.username }}), se borrarán sus credenciales de acceso permanentemente. Esta acción no se puede deshacer.
+    </p>
+    
+    <form method="POST">
+        {% csrf_token %}
+        <div style="display: flex; gap: 15px; justify-content: center;">
+            <a href="{% url 'lista_empleados' %}" class="btn btn-secondary" style="padding: 10px 25px;">Cancelar</a>
+            <button type="submit" class="btn btn-danger" style="padding: 10px 25px; background: var(--danger); color: white; border: none; border-radius: 4px; font-weight: 500; cursor: pointer;">
+                <i class="fas fa-trash"></i> Sí, Eliminar
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

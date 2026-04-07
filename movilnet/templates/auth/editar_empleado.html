@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Empleado - Movilnet System{% endblock %}
+
+{% block content %}
+<div class="header-section" style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
+    <h1 class="header-title"><i class="fas fa-user-edit"></i> Editar Empleado</h1>
+    <a href="{% url 'lista_empleados' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Volver a la Lista
+    </a>
+</div>
+
+<div class="form-container" style="background: white; padding: 30px; border-radius: 8px; max-width: 600px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+    <form method="POST">
+        {% csrf_token %}
+        
+        {% if form.errors %}
+        <div class="alert alert-danger" style="margin-bottom: 20px;">
+            Por favor, corrige los errores en el formulario.
+        </div>
+        {% endif %}
+
+        <h3 style="margin-bottom: 20px; font-size: 1.2rem; color: var(--primary-color); border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            Datos Personales
+        </h3>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+                <label class="form-label">{{ form.first_name.label }}</label>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}
+                <div class="text-danger" style="font-size: 0.85rem; margin-top: 5px;">{{ form.first_name.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label class="form-label">{{ form.last_name.label }}</label>
+                {{ form.last_name }}
+                {% if form.last_name.errors %}
+                <div class="text-danger" style="font-size: 0.85rem; margin-top: 5px;">{{ form.last_name.errors }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <h3 style="margin: 25px 0 20px; font-size: 1.2rem; color: var(--primary-color); border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            Privilegios y Seguridad
+        </h3>
+
+        <div class="form-group" style="margin-bottom: 15px;">
+            <label class="form-label">{{ form.rol.label }}</label>
+            {{ form.rol }}
+            {% if form.rol.errors %}
+            <div class="text-danger" style="font-size: 0.85rem; margin-top: 5px;">{{ form.rol.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+                <label class="form-label">{{ form.animal_favorito.label }}</label>
+                {{ form.animal_favorito }}
+                {% if form.animal_favorito.errors %}
+                <div class="text-danger" style="font-size: 0.85rem; margin-top: 5px;">{{ form.animal_favorito.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">{{ form.color_favorito.label }}</label>
+                {{ form.color_favorito }}
+                {% if form.color_favorito.errors %}
+                <div class="text-danger" style="font-size: 0.85rem; margin-top: 5px;">{{ form.color_favorito.errors }}</div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div style="margin-top: 30px; text-align: right;">
+            <button type="submit" class="btn btn-primary" style="padding: 10px 25px;">
+                <i class="fas fa-save"></i> Guardar Cambios
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

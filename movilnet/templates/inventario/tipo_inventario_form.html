@@ -36,11 +36,11 @@
 
             <div class="form-group" style="margin-bottom: 20px;">
                 <label style="display: block; margin-bottom: 6px; font-weight: 600;">
-                    Dirección <span style="color: var(--danger);">*</span>
+                    Tipo <span style="color: var(--danger);">*</span>
                 </label>
                 {{ form.direccion }}
                 <small style="color: var(--text-gray); display: block; margin-top: 4px;">
-                    <strong>ENTRADA</strong> suma unidades al stock. <strong>SALIDA</strong> las resta.
+                    <strong>Entrada</strong> suma unidades al stock. <strong>Salida</strong> las resta.
                 </small>
                 {% if form.direccion.errors %}
                     <div style="color: var(--danger); font-size: 0.875rem; margin-top: 4px;">{{ form.direccion.errors.0 }}</div>
@@ -49,11 +49,11 @@
 
             <div class="form-group" style="margin-bottom: 20px;">
                 <label style="display: block; margin-bottom: 6px; font-weight: 600;">
-                    Nombre del Tipo <span style="color: var(--danger);">*</span>
+                    Nombre <span style="color: var(--danger);">*</span>
                 </label>
                 {{ form.tipo_movimiento }}
                 <small style="color: var(--text-gray); display: block; margin-top: 4px;">
-                    Ej: "Compra a proveedor", "Venta", "Devolución de cliente", "Ajuste de inventario"
+                    Ej: "Compra a proveedor", "Venta", "Devolución de cliente"
                 </small>
                 {% if form.tipo_movimiento.errors %}
                     <div style="color: var(--danger); font-size: 0.875rem; margin-top: 4px;">{{ form.tipo_movimiento.errors.0 }}</div>
@@ -62,11 +62,11 @@
 
             <div class="form-group" style="margin-bottom: 24px;">
                 <label style="display: block; margin-bottom: 6px; font-weight: 600;">
-                    Descripción / Categoría <span style="color: var(--danger);">*</span>
+                    Descripción <span style="color: var(--danger);">*</span>
                 </label>
                 {{ form.categoria_movimiento }}
                 <small style="color: var(--text-gray); display: block; margin-top: 4px;">
-                    Texto libre para categorizar o describir el tipo. Ej: "Compra", "Venta directa", "Merma"
+                    Detalle adicional. Ej: "Compra", "Venta directa", "Merma"
                 </small>
                 {% if form.categoria_movimiento.errors %}
                     <div style="color: var(--danger); font-size: 0.875rem; margin-top: 4px;">{{ form.categoria_movimiento.errors.0 }}</div>

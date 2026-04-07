@@ -21,6 +21,7 @@ from .forms import (
     CotizacionForm, DetalleCotizacionFormSet,
     OrdenCompraForm, DetalleOrdenCompraFormSet,
     NotaEntregaForm, DetalleNotaEntregaFormSet,
+    EditarEmpleadoForm,
 )
 
 
@@ -164,6 +165,76 @@ def lista_empleados_view(request):
 
     empleados = PerfilEmpleado.objects.select_related('user').all()
     return render(request, 'auth/lista_empleados.html', {'empleados': empleados})
+
+
+class EmpleadoDetailView(LoginRequiredMixin, AdminRequeridoMixin, DetailView):
+    model = PerfilEmpleado
+    template_name = 'auth/empleado_detail.html'
+    context_object_name = 'empleado'
+
+
+class EmpleadoUpdateView(LoginRequiredMixin, AdminRequeridoMixin, UpdateView):
+    model = PerfilEmpleado
+    form_class = EditarEmpleadoForm
+    template_name = 'auth/editar_empleado.html'
+    success_url = reverse_lazy('lista_empleados')
+
+    def form_valid(self, form):
+        messages.success(self.request, '¡Empleado actualizado exitosamente!')
+        return super().form_valid(form)
+
+
+class EmpleadoDeleteView(LoginRequiredMixin, AdminRequeridoMixin, DeleteView):
+    model = PerfilEmpleado
+    template_name = 'auth/empleado_confirm_delete.html'
+    success_url = reverse_lazy('lista_empleados')
+
+    def delete(self, request, *args, **kwargs):
+        empleado_a_borrar = self.get_object()
+        
+        # Validar no borrarse a si mismo
+        if empleado_a_borrar.user == request.user:
+            messages.error(self.request, 'No puedes eliminar tu propia cuenta.')
+            return redirect(self.success_url)
+
+        # Validar al menos 1 admin.
+        if empleado_a_borrar.rol == 'admin':
+            admins_en_sistema = PerfilEmpleado.objects.filter(rol='admin').count()
+            if admins_en_sistema <= 1:
+                messages.error(self.request, 'Debe existir al menos un administrador en el sistema.')
+                return redirect(self.success_url)
+
+        # Borrar el User de Django asociado.
+        user = empleado_a_borrar.user
+        response = super().delete(request, *args, **kwargs)
+        user.delete()
+        messages.success(self.request, '¡Empleado eliminado exitosamente!')
+        return response
+
+
+@login_required
+def empleado_toggle_activo_view(request, pk):
+    try:
+        es_admin = request.user.perfil.rol == 'admin'
+    except PerfilEmpleado.DoesNotExist:
+        es_admin = request.user.is_superuser
+
+    if not es_admin:
+        messages.error(request, 'No tienes permisos de administrador.')
+        return redirect('lista_empleados')
+
+    perfil = get_object_or_404(PerfilEmpleado, pk=pk)
+    if perfil.user == request.user:
+        messages.error(request, 'No puedes inactivar tu propia cuenta.')
+        return redirect('lista_empleados')
+        
+    user = perfil.user
+    user.is_active = not user.is_active
+    user.save(update_fields=['is_active'])
+    
+    estado = "activado" if user.is_active else "inactivado"
+    messages.success(request, f'Empleado {estado} con éxito.')
+    return redirect('lista_empleados')
 
 
 # ==================== DASHBOARD ====================
@@ -528,7 +599,7 @@ def stock_actual_view(request):
 
 # ==================== CRUD COTIZACIÓN ====================
 
-class CotizacionListView(LoginRequiredMixin, ListView):
+class CotizacionListView(LoginRequiredMixin, AdminRequeridoMixin, ListView):
     model = Cotizacion
     template_name = 'cotizaciones/cotizacion_list.html'
     context_object_name = 'cotizaciones'
@@ -545,13 +616,13 @@ class CotizacionListView(LoginRequiredMixin, ListView):
         return queryset
 
 
-class CotizacionDetailView(LoginRequiredMixin, DetailView):
+class CotizacionDetailView(LoginRequiredMixin, AdminRequeridoMixin, DetailView):
     model = Cotizacion
     template_name = 'cotizaciones/cotizacion_detail.html'
     context_object_name = 'cotizacion'
 
 
-class CotizacionCreateView(LoginRequiredMixin, CreateView):
+class CotizacionCreateView(LoginRequiredMixin, AdminRequeridoMixin, CreateView):
     model = Cotizacion
     form_class = CotizacionForm
     template_name = 'cotizaciones/cotizacion_form.html'
@@ -586,7 +657,7 @@ class CotizacionCreateView(LoginRequiredMixin, CreateView):
         return redirect(self.success_url)
 
 
-class CotizacionUpdateView(LoginRequiredMixin, UpdateView):
+class CotizacionUpdateView(LoginRequiredMixin, AdminRequeridoMixin, UpdateView):
     model = Cotizacion
     form_class = CotizacionForm
     template_name = 'cotizaciones/cotizacion_form.html'
@@ -628,7 +699,7 @@ class CotizacionDeleteView(LoginRequiredMixin, AdminRequeridoMixin, DeleteView):
 
 # ==================== CRUD ORDEN DE COMPRA ====================
 
-class OrdenCompraListView(LoginRequiredMixin, ListView):
+class OrdenCompraListView(LoginRequiredMixin, AdminRequeridoMixin, ListView):
     model = OrdenCompra
     template_name = 'ordenes/orden_compra_list.html'
     context_object_name = 'ordenes'
@@ -638,13 +709,13 @@ class OrdenCompraListView(LoginRequiredMixin, ListView):
         return super().get_queryset().select_related('cotizacion__proveedor')
 
 
-class OrdenCompraDetailView(LoginRequiredMixin, DetailView):
+class OrdenCompraDetailView(LoginRequiredMixin, AdminRequeridoMixin, DetailView):
     model = OrdenCompra
     template_name = 'ordenes/orden_compra_detail.html'
     context_object_name = 'orden'
 
 
-class OrdenCompraCreateView(LoginRequiredMixin, CreateView):
+class OrdenCompraCreateView(LoginRequiredMixin, AdminRequeridoMixin, CreateView):
     model = OrdenCompra
     form_class = OrdenCompraForm
     template_name = 'ordenes/orden_compra_form.html'
@@ -678,7 +749,7 @@ class OrdenCompraCreateView(LoginRequiredMixin, CreateView):
         return redirect(self.success_url)
 
 
-class OrdenCompraUpdateView(LoginRequiredMixin, UpdateView):
+class OrdenCompraUpdateView(LoginRequiredMixin, AdminRequeridoMixin, UpdateView):
     model = OrdenCompra
     form_class = OrdenCompraForm
     template_name = 'ordenes/orden_compra_form.html'

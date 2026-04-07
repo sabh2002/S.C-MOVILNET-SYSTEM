@@ -216,8 +216,8 @@ class ProductoForm(forms.ModelForm):
 
 class LoginForm(forms.Form):
     username = forms.CharField(
-        label='Usuario',
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de usuario'})
+        label='Cédula',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. V-12345678'})
     )
     password = forms.CharField(
         label='Contraseña',
@@ -274,8 +274,8 @@ class CambiarPasswordForm(forms.Form):
 class VerificarUsuarioForm(forms.Form):
     """Paso 1: Verificar que el usuario existe antes de mostrar preguntas de seguridad"""
     username = forms.CharField(
-        label='Nombre de usuario',
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ingresa tu nombre de usuario'})
+        label='Cédula de usuario',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ingresa tu cédula'})
     )
 
     def clean_username(self):
@@ -347,8 +347,8 @@ class NuevaPasswordForm(forms.Form):
 
 class RegistroEmpleadoForm(forms.ModelForm):
     username = forms.CharField(
-        label='Usuario',
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de usuario'})
+        label='Cédula',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. V-12345678'})
     )
     first_name = forms.CharField(
         label='Nombre',
@@ -378,8 +378,18 @@ class RegistroEmpleadoForm(forms.ModelForm):
 
     def clean_username(self):
         username = self.cleaned_data.get('username')
+        from django.core.validators import RegexValidator
+        cedula_validator = RegexValidator(
+            regex=r'^[VEJPG]-\d{6,8}$',
+            message='La cédula debe tener el formato: V-12345678, E-1234567, J-12345678, P-123456 o G-12345678'
+        )
+        try:
+            cedula_validator(username)
+        except forms.ValidationError as e:
+            raise forms.ValidationError(e.message)
+
         if User.objects.filter(username=username).exists():
-            raise forms.ValidationError('Ese nombre de usuario ya está en uso.')
+            raise forms.ValidationError('Ya existe un usuario con esta cédula.')
         return username
 
     def clean(self):
@@ -404,6 +414,42 @@ class RegistroEmpleadoForm(forms.ModelForm):
         return perfil
 
 
+class EditarEmpleadoForm(forms.ModelForm):
+    first_name = forms.CharField(
+        label='Nombre',
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    last_name = forms.CharField(
+        label='Apellido',
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+
+    class Meta:
+        model = PerfilEmpleado
+        fields = ['rol', 'animal_favorito', 'color_favorito']
+        widgets = {
+            'rol': forms.Select(attrs={'class': 'form-control'}),
+            'animal_favorito': forms.TextInput(attrs={'class': 'form-control'}),
+            'color_favorito': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and hasattr(self.instance, 'user'):
+            self.fields['first_name'].initial = self.instance.user.first_name
+            self.fields['last_name'].initial = self.instance.user.last_name
+
+    def save(self, commit=True):
+        perfil = super().save(commit=False)
+        user = perfil.user
+        user.first_name = self.cleaned_data['first_name']
+        user.last_name = self.cleaned_data['last_name']
+        if commit:
+            user.save()
+            perfil.save()
+        return perfil
+
+
 # ==================== FORMULARIOS DE INVENTARIO ====================
 
 class TipoInventarioForm(forms.ModelForm):
@@ -411,11 +457,11 @@ class TipoInventarioForm(forms.ModelForm):
         model = TipoInventario
         fields = ['tipo_movimiento', 'direccion', 'categoria_movimiento']
         widgets = {
+            'direccion': forms.Select(attrs={'class': 'form-control'}),
             'tipo_movimiento': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Ej. Compra a proveedor, Venta, Devolución...'
             }),
-            'direccion': forms.Select(attrs={'class': 'form-control'}),
             'categoria_movimiento': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Ej. Compra, Ajuste, Devolución...'

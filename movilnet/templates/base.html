@@ -110,6 +110,7 @@
                 </li>
 
                 <!-- Compras -->
+                {% if request.user.perfil.rol == 'admin' or request.user.is_superuser %}
                 <li class="menu-section">Compras</li>
                 <li>
                     <a href="{% url 'cotizacion_list' %}" {% if 'cotizacion' in request.path %}class="active"{% endif %}>
@@ -123,6 +124,7 @@
                         <span>Órdenes Compra</span>
                     </a>
                 </li>
+                {% endif %}
 
                 <!-- Ventas -->
                 <li class="menu-section">Ventas</li>

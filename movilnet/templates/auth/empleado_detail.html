@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle de Empleado - Movilnet System{% endblock %}
+
+{% block content %}
+<div class="header-section" style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;">
+    <h1 class="header-title"><i class="fas fa-id-badge"></i> Perfil de Empleado</h1>
+    <a href="{% url 'lista_empleados' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Volver a la Lista
+    </a>
+</div>
+
+<div class="perfil-container" style="background: white; padding: 30px; border-radius: 8px; max-width: 600px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <div style="width: 100px; height: 100px; border-radius: 50%; background-color: var(--primary-color);
+                    display: flex; align-items: center; justify-content: center; color: white; font-size: 2.5rem; margin: 0 auto 15px;">
+            {{ empleado.user.username|first|upper }}
+        </div>
+        <h2 style="margin: 0; color: var(--text-color);">{{ empleado.user.first_name }} {{ empleado.user.last_name }}</h2>
+        <p style="color: var(--text-gray); margin-top: 5px;">{{ empleado.get_rol_display }}</p>
+        {% if empleado.user.is_active %}
+            <span style="background: #28a74520; color: #28a745; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 0.85rem;"><i class="fas fa-check-circle"></i> Activo</span>
+        {% else %}
+            <span style="background: #dc354520; color: #dc3545; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 0.85rem;"><i class="fas fa-times-circle"></i> Inactivo</span>
+        {% endif %}
+    </div>
+
+    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+
+    <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+        <div>
+            <h3 style="font-size: 1.1rem; color: var(--primary-color); margin-bottom: 15px;"><i class="fas fa-info-circle"></i> Datos Personales</h3>
+            <p><strong>Cédula:</strong> {{ empleado.user.username }}</p>
+            <p><strong>Fecha de Registro:</strong> {{ empleado.user.date_joined|date:"d/m/Y H:i" }}</p>
+        </div>
+        
+        <div style="margin-top: 10px;">
+            <h3 style="font-size: 1.1rem; color: var(--primary-color); margin-bottom: 15px;"><i class="fas fa-shield-alt"></i> Seguridad y Acceso</h3>
+            <p><strong>Animal Favorito:</strong> {{ empleado.animal_favorito }}</p>
+            <p><strong>Color Favorito:</strong> {{ empleado.color_favorito }}</p>
+        </div>
+    </div>
+    
+    <div style="margin-top: 30px; text-align: center; display: flex; gap: 10px; justify-content: center;">
+        <a href="{% url 'empleado_update' empleado.pk %}" class="btn btn-primary"><i class="fas fa-edit"></i> Editar Empleado</a>
+        {% if empleado.user != request.user %}
+        <a href="{% url 'empleado_toggle_activo' empleado.pk %}" class="btn btn-warning" style="color: white;"><i class="fas fa-power-off"></i> Cambiar Estado</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
