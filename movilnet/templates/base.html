@@ -113,15 +113,9 @@
                 {% if request.user.perfil.rol == 'admin' or request.user.is_superuser %}
                 <li class="menu-section">Compras</li>
                 <li>
-                    <a href="{% url 'cotizacion_list' %}" {% if 'cotizacion' in request.path %}class="active"{% endif %}>
-                        <i class="fas fa-file-invoice-dollar"></i>
-                        <span>Cotizaciones</span>
-                    </a>
-                </li>
-                <li>
                     <a href="{% url 'orden_compra_list' %}" {% if 'ordenes-compra' in request.path %}class="active"{% endif %}>
                         <i class="fas fa-shopping-cart"></i>
-                        <span>Órdenes Compra</span>
+                        <span>Órdenes y Compras</span>
                     </a>
                 </li>
                 {% endif %}

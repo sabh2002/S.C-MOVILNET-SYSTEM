@@ -40,28 +40,34 @@
         </h3>
 
         {{ detalles.management_form }}
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;" id="tabla-detalles-ne">
             <thead>
                 <tr style="background-color: var(--bg-light);">
                     <th style="padding: 10px; text-align: left;">Producto</th>
-                    <th style="padding: 10px; text-align: center;">Cantidad</th>
-                    <th style="padding: 10px; text-align: center;">Precio Unit.</th>
-                    <th style="padding: 10px; text-align: center;">Descuento</th>
-                    <th style="padding: 10px; text-align: center;">Eliminar</th>
+                    <th style="padding: 10px; text-align: center; width: 100px;">Cantidad</th>
+                    <th style="padding: 10px; text-align: center; width: 130px;">Precio Unit.</th>
+                    <th style="padding: 10px; text-align: center; width: 110px;">Descuento</th>
+                    <th style="padding: 10px; text-align: center; width: 70px;">Quitar</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="formset-body-ne">
                 {% for detalle in detalles %}
-                <tr style="border-bottom: 1px solid var(--border-color);">
-                    <td style="padding: 10px;">{{ detalle.id }}{{ detalle.producto }}</td>
-                    <td style="padding: 10px; text-align: center;">{{ detalle.cantidad }}</td>
-                    <td style="padding: 10px; text-align: center;">{{ detalle.precio_unitario }}</td>
-                    <td style="padding: 10px; text-align: center;">{{ detalle.descuento }}</td>
-                    <td style="padding: 10px; text-align: center;">{{ detalle.DELETE }}</td>
+                <tr class="detalle-row-ne" style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 8px;">{{ detalle.id }}{{ detalle.producto }}</td>
+                    <td style="padding: 8px; text-align: center;">{{ detalle.cantidad }}</td>
+                    <td style="padding: 8px; text-align: center;">{{ detalle.precio_unitario }}</td>
+                    <td style="padding: 8px; text-align: center;">{{ detalle.descuento }}</td>
+                    <td style="padding: 8px; text-align: center;">{{ detalle.DELETE }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+
+        <div style="margin-bottom: 24px;">
+            <button type="button" id="btn-agregar-producto-ne" class="btn btn-outline" style="font-size: 0.875rem;">
+                <i class="fas fa-plus"></i> Agregar producto
+            </button>
+        </div>
 
         <div style="display: flex; gap: 10px;">
             <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar</button>
@@ -69,4 +75,47 @@
         </div>
     </form>
 </div>
+
+<!-- Fila plantilla oculta para clonar -->
+<table style="display:none;">
+    <tbody>
+        <tr id="fila-template-ne" class="detalle-row-ne" style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 8px;">
+                <select name="detalles-__prefix__-producto" class="form-control">
+                    <option value="">---------</option>
+                    {% for p in productos %}
+                    <option value="{{ p.pk }}">{{ p.nombre }} - {{ p.marca.nombre_marca }} (Stock: {{ p.stock_actual }})</option>
+                    {% endfor %}
+                </select>
+                <input type="hidden" name="detalles-__prefix__-id" value="">
+            </td>
+            <td style="padding: 8px;">
+                <input type="number" name="detalles-__prefix__-cantidad" class="form-control" min="1" value="1">
+            </td>
+            <td style="padding: 8px;">
+                <input type="number" name="detalles-__prefix__-precio_unitario" class="form-control" min="0" step="0.01" value="0.00">
+            </td>
+            <td style="padding: 8px;">
+                <input type="number" name="detalles-__prefix__-descuento" class="form-control" min="0" step="0.01" value="0.00">
+            </td>
+            <td style="padding: 8px; text-align: center;">
+                <input type="checkbox" name="detalles-__prefix__-DELETE">
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<script>
+document.getElementById('btn-agregar-producto-ne').addEventListener('click', function () {
+    const totalForms = document.getElementById('id_detalles-TOTAL_FORMS');
+    const idx = parseInt(totalForms.value);
+    const template = document.getElementById('fila-template-ne');
+    const nuevaFila = template.cloneNode(true);
+    nuevaFila.removeAttribute('id');
+    nuevaFila.style.display = '';
+    nuevaFila.innerHTML = nuevaFila.innerHTML.replace(/__prefix__/g, idx);
+    document.getElementById('formset-body-ne').appendChild(nuevaFila);
+    totalForms.value = idx + 1;
+});
+</script>
 {% endblock %}

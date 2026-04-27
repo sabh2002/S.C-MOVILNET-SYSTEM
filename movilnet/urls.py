@@ -23,6 +23,7 @@ urlpatterns = [
     # URLs Marca
     path('marcas/', views.MarcaListView.as_view(), name='marca_list'),
     path('marcas/crear/', views.MarcaCreateView.as_view(), name='marca_create'),
+    path('marcas/crear-ajax/', views.marca_crear_ajax, name='marca_crear_ajax'),
     path('marcas/editar/<int:pk>/', views.MarcaUpdateView.as_view(), name='marca_update'),
     path('marcas/eliminar/<int:pk>/', views.MarcaDeleteView.as_view(), name='marca_delete'),
 
@@ -55,14 +56,7 @@ urlpatterns = [
     path('inventario/movimientos/', views.MovimientoInventarioListView.as_view(), name='movimiento_list'),
     path('inventario/movimientos/crear/', views.MovimientoInventarioCreateView.as_view(), name='movimiento_create'),
 
-    # URLs Cotización
-    path('cotizaciones/', views.CotizacionListView.as_view(), name='cotizacion_list'),
-    path('cotizaciones/crear/', views.CotizacionCreateView.as_view(), name='cotizacion_create'),
-    path('cotizaciones/<int:pk>/', views.CotizacionDetailView.as_view(), name='cotizacion_detail'),
-    path('cotizaciones/editar/<int:pk>/', views.CotizacionUpdateView.as_view(), name='cotizacion_update'),
-    path('cotizaciones/eliminar/<int:pk>/', views.CotizacionDeleteView.as_view(), name='cotizacion_delete'),
-
-    # URLs Orden de Compra
+    # URLs Orden de Compra / Compra
     path('ordenes-compra/', views.OrdenCompraListView.as_view(), name='orden_compra_list'),
     path('ordenes-compra/crear/', views.OrdenCompraCreateView.as_view(), name='orden_compra_create'),
     path('ordenes-compra/<int:pk>/', views.OrdenCompraDetailView.as_view(), name='orden_compra_detail'),

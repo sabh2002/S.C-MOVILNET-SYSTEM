@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     Marca, Proveedor, Cliente, Producto,
     PerfilEmpleado, Bitacora, TipoInventario, MovimientoInventario,
-    Cotizacion, DetalleCotizacion, OrdenCompra, DetalleOrdenCompra,
+    OrdenCompra, DetalleOrdenCompra,
     NotaEntrega, DetalleNotaEntrega
 )
 
@@ -71,19 +71,6 @@ class MovimientoInventarioAdmin(admin.ModelAdmin):
     search_fields = ('producto__nombre', 'observaciones')
 
 
-class DetalleCotizacionInline(admin.TabularInline):
-    model = DetalleCotizacion
-    extra = 1
-
-
-@admin.register(Cotizacion)
-class CotizacionAdmin(admin.ModelAdmin):
-    list_display = ('__str__', 'proveedor', 'fecha_cotizacion', 'total', 'estado', 'validez_dias')
-    list_filter = ('estado', 'fecha_cotizacion')
-    search_fields = ('proveedor__nombre',)
-    inlines = [DetalleCotizacionInline]
-
-
 class DetalleOrdenCompraInline(admin.TabularInline):
     model = DetalleOrdenCompra
     extra = 1
@@ -91,9 +78,9 @@ class DetalleOrdenCompraInline(admin.TabularInline):
 
 @admin.register(OrdenCompra)
 class OrdenCompraAdmin(admin.ModelAdmin):
-    list_display = ('numero_orden', 'cotizacion', 'fecha_orden', 'fecha_registro')
-    list_filter = ('fecha_orden',)
-    search_fields = ('numero_orden',)
+    list_display = ('numero_orden', 'tipo', 'proveedor', 'fecha_orden', 'total', 'fecha_registro')
+    list_filter = ('tipo', 'fecha_orden')
+    search_fields = ('numero_orden', 'proveedor__nombre')
     inlines = [DetalleOrdenCompraInline]
 
 

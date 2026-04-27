@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from .models import (
     Marca, Proveedor, Cliente, Producto, PerfilEmpleado,
-    TipoInventario, MovimientoInventario, Cotizacion, DetalleCotizacion,
+    TipoInventario, MovimientoInventario,
     OrdenCompra, DetalleOrdenCompra, NotaEntrega, DetalleNotaEntrega
 )
 
@@ -229,11 +229,16 @@ class LoginForm(forms.Form):
         username = cleaned_data.get('username')
         password = cleaned_data.get('password')
         if username and password:
+            from django.contrib.auth.models import User as DjangoUser
+            try:
+                u = DjangoUser.objects.get(username=username)
+                if not u.is_active:
+                    raise forms.ValidationError('Usuario inactivo. Contacta al administrador.')
+            except DjangoUser.DoesNotExist:
+                pass
             user = authenticate(username=username, password=password)
             if user is None:
                 raise forms.ValidationError('Usuario o contraseña incorrectos.')
-            if not user.is_active:
-                raise forms.ValidationError('Esta cuenta está desactivada.')
             cleaned_data['user'] = user
         return cleaned_data
 
@@ -392,6 +397,20 @@ class RegistroEmpleadoForm(forms.ModelForm):
             raise forms.ValidationError('Ya existe un usuario con esta cédula.')
         return username
 
+    def clean_first_name(self):
+        import re
+        nombre = self.cleaned_data.get('first_name', '').strip()
+        if not re.match(r'^[A-Za-záéíóúÁÉÍÓÚüÜñÑ\s]+$', nombre):
+            raise forms.ValidationError('El nombre solo puede contener letras y espacios, sin números.')
+        return nombre
+
+    def clean_last_name(self):
+        import re
+        apellido = self.cleaned_data.get('last_name', '').strip()
+        if not re.match(r'^[A-Za-záéíóúÁÉÍÓÚüÜñÑ\s]+$', apellido):
+            raise forms.ValidationError('El apellido solo puede contener letras y espacios, sin números.')
+        return apellido
+
     def clean(self):
         cleaned_data = super().clean()
         p1 = cleaned_data.get('password')
@@ -439,6 +458,20 @@ class EditarEmpleadoForm(forms.ModelForm):
             self.fields['first_name'].initial = self.instance.user.first_name
             self.fields['last_name'].initial = self.instance.user.last_name
 
+    def clean_first_name(self):
+        import re
+        nombre = self.cleaned_data.get('first_name', '').strip()
+        if not re.match(r'^[A-Za-záéíóúÁÉÍÓÚüÜñÑ\s]+$', nombre):
+            raise forms.ValidationError('El nombre solo puede contener letras y espacios, sin números.')
+        return nombre
+
+    def clean_last_name(self):
+        import re
+        apellido = self.cleaned_data.get('last_name', '').strip()
+        if not re.match(r'^[A-Za-záéíóúÁÉÍÓÚüÜñÑ\s]+$', apellido):
+            raise forms.ValidationError('El apellido solo puede contener letras y espacios, sin números.')
+        return apellido
+
     def save(self, commit=True):
         perfil = super().save(commit=False)
         user = perfil.user
@@ -481,70 +514,29 @@ class MovimientoInventarioForm(forms.ModelForm):
         }
 
 
-# ==================== FORMULARIOS DE COTIZACIÓN ====================
-
-class CotizacionForm(forms.ModelForm):
-    class Meta:
-        model = Cotizacion
-        fields = ['proveedor', 'fecha_cotizacion', 'validez_dias', 'estado', 'observaciones']
-        widgets = {
-            'proveedor': forms.Select(attrs={'class': 'form-control'}),
-            'fecha_cotizacion': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'validez_dias': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '30', 'min': '1'}),
-            'estado': forms.Select(attrs={'class': 'form-control'}),
-            'observaciones': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Observaciones'}),
-        }
-
-
-class DetalleCotizacionForm(forms.ModelForm):
-    class Meta:
-        model = DetalleCotizacion
-        fields = ['producto', 'cantidad', 'precio_unitario']
-        widgets = {
-            'producto': forms.Select(attrs={'class': 'form-control'}),
-            'cantidad': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}),
-            'precio_unitario': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'placeholder': '0.00'}),
-        }
-
-
-DetalleCotizacionFormSet = inlineformset_factory(
-    Cotizacion, DetalleCotizacion,
-    form=DetalleCotizacionForm,
-    extra=1,
-    can_delete=True
-)
-
-
-# ==================== FORMULARIOS DE ORDEN DE COMPRA ====================
+# ==================== FORMULARIOS DE ORDEN DE COMPRA / COMPRA ====================
 
 class OrdenCompraForm(forms.ModelForm):
     class Meta:
         model = OrdenCompra
-        fields = ['cotizacion', 'numero_orden', 'fecha_orden', 'estado']
+        fields = ['proveedor', 'tipo', 'numero_orden', 'fecha_orden', 'observaciones']
         widgets = {
-            'cotizacion': forms.Select(attrs={'class': 'form-control'}),
+            'proveedor': forms.Select(attrs={'class': 'form-control'}),
+            'tipo': forms.Select(attrs={'class': 'form-control'}),
             'numero_orden': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej. OC-001'}),
             'fecha_orden': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'estado': forms.Select(attrs={'class': 'form-control'}),
+            'observaciones': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Observaciones (opcional)'}),
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Solo mostrar cotizaciones aprobadas (y la actual si estamos editando)
-        qs = Cotizacion.objects.filter(estado='aprobada').select_related('proveedor')
-        if self.instance and self.instance.pk and self.instance.cotizacion_id:
-            qs = qs | Cotizacion.objects.filter(pk=self.instance.cotizacion_id)
-        self.fields['cotizacion'].queryset = qs
 
 
 class DetalleOrdenCompraForm(forms.ModelForm):
     class Meta:
         model = DetalleOrdenCompra
-        fields = ['producto', 'cantidad_solicitada', 'cantidad_recibida']
+        fields = ['producto', 'cantidad', 'precio_unitario']
         widgets = {
-            'producto': forms.Select(attrs={'class': 'form-control'}),
-            'cantidad_solicitada': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}),
-            'cantidad_recibida': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
+            'producto': forms.Select(attrs={'class': 'form-control producto-select'}),
+            'cantidad': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}),
+            'precio_unitario': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'placeholder': '0.00'}),
         }
 
 

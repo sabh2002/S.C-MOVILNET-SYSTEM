@@ -270,69 +270,19 @@ class MovimientoInventario(models.Model):
         return f"{self.tipo_inventario} - {self.producto.nombre} ({self.cantidad})"
 
 
-class Cotizacion(models.Model):
-    """Modelo para gestionar cotizaciones de proveedores"""
-    ESTADO_CHOICES = [
-        ('pendiente', 'Pendiente'),
-        ('aprobada', 'Aprobada'),
-        ('rechazada', 'Rechazada'),
-        ('vencida', 'Vencida'),
-    ]
-
-    proveedor = models.ForeignKey(Proveedor, on_delete=models.PROTECT, verbose_name="Proveedor", related_name="cotizaciones")
-    fecha_cotizacion = models.DateField(verbose_name="Fecha de Cotización")
-    validez_dias = models.IntegerField(validators=[MinValueValidator(1)], verbose_name="Validez (días)")
-    total = models.DecimalField(max_digits=12, decimal_places=2, default=0, validators=[MinValueValidator(0)], verbose_name="Total")
-    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente', verbose_name="Estado")
-    observaciones = models.TextField(verbose_name="Observaciones", blank=True, null=True)
-    fecha_registro = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Registro")
-
-    class Meta:
-        verbose_name = "Cotización"
-        verbose_name_plural = "Cotizaciones"
-        ordering = ['-fecha_cotizacion']
-
-    def __str__(self):
-        return f"COT-{self.pk} - {self.proveedor.nombre}"
-
-
-class DetalleCotizacion(models.Model):
-    """Modelo para los detalles de cada cotización"""
-    cotizacion = models.ForeignKey(Cotizacion, on_delete=models.CASCADE, verbose_name="Cotización", related_name="detalles")
-    producto = models.ForeignKey(Producto, on_delete=models.PROTECT, verbose_name="Producto", related_name="detalles_cotizacion")
-    cantidad = models.IntegerField(validators=[MinValueValidator(1)], verbose_name="Cantidad")
-    precio_unitario = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0,
-        validators=[MinValueValidator(0)],
-        verbose_name="Precio Unitario"
-    )
-    fecha_registro = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Registro")
-
-    class Meta:
-        verbose_name = "Detalle de Cotización"
-        verbose_name_plural = "Detalles de Cotización"
-
-    def __str__(self):
-        return f"{self.producto.nombre} x{self.cantidad}"
-
-    @property
-    def subtotal(self):
-        return self.cantidad * self.precio_unitario
-
-
 class OrdenCompra(models.Model):
-    """Modelo para gestionar órdenes de compra"""
-    ESTADO_CHOICES = [
-        ('pendiente', 'Pendiente'),
-        ('parcial', 'Parcialmente Recibida'),
-        ('recibida', 'Recibida'),
-        ('cancelada', 'Cancelada'),
+    """Orden de Compra (pedido al proveedor) o Compra (mercancía recibida, actualiza stock)"""
+    TIPO_CHOICES = [
+        ('orden', 'Orden de Compra'),
+        ('compra', 'Compra'),
     ]
 
-    cotizacion = models.ForeignKey(Cotizacion, on_delete=models.PROTECT, verbose_name="Cotización", related_name="ordenes_compra")
-    numero_orden = models.CharField(max_length=50, unique=True, verbose_name="Número de Orden")
-    fecha_orden = models.DateField(verbose_name="Fecha de Orden")
-    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente', verbose_name="Estado")
+    proveedor = models.ForeignKey(Proveedor, on_delete=models.PROTECT, verbose_name="Proveedor", related_name="ordenes_compra")
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES, default='orden', verbose_name="Tipo")
+    numero_orden = models.CharField(max_length=50, unique=True, verbose_name="Número")
+    fecha_orden = models.DateField(verbose_name="Fecha")
+    total = models.DecimalField(max_digits=12, decimal_places=2, default=0, validators=[MinValueValidator(0)], verbose_name="Total")
+    observaciones = models.TextField(verbose_name="Observaciones", blank=True, null=True)
     fecha_registro = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Registro")
 
     class Meta:
@@ -341,38 +291,27 @@ class OrdenCompra(models.Model):
         ordering = ['-fecha_orden']
 
     def __str__(self):
-        return f"OC-{self.numero_orden}"
-
-    def actualizar_estado(self):
-        """Actualiza el estado según las cantidades recibidas vs solicitadas"""
-        detalles = self.detalles.all()
-        if not detalles.exists():
-            return
-        total_solicitado = sum(d.cantidad_solicitada for d in detalles)
-        total_recibido = sum(d.cantidad_recibida for d in detalles)
-        if total_recibido == 0:
-            self.estado = 'pendiente'
-        elif total_recibido >= total_solicitado:
-            self.estado = 'recibida'
-        else:
-            self.estado = 'parcial'
-        self.save(update_fields=['estado'])
+        label = dict(self.TIPO_CHOICES).get(self.tipo, self.tipo)
+        return f"{label} {self.numero_orden}"
 
 
 class DetalleOrdenCompra(models.Model):
-    """Modelo para los detalles de cada orden de compra"""
-    orden_compra = models.ForeignKey(OrdenCompra, on_delete=models.CASCADE, verbose_name="Orden de Compra", related_name="detalles")
+    """Línea de producto dentro de una OrdenCompra o Compra"""
+    orden_compra = models.ForeignKey(OrdenCompra, on_delete=models.CASCADE, verbose_name="Orden", related_name="detalles")
     producto = models.ForeignKey(Producto, on_delete=models.PROTECT, verbose_name="Producto", related_name="detalles_orden_compra")
-    cantidad_solicitada = models.IntegerField(validators=[MinValueValidator(1)], verbose_name="Cantidad Solicitada")
-    cantidad_recibida = models.IntegerField(default=0, validators=[MinValueValidator(0)], verbose_name="Cantidad Recibida")
-    fecha_registro = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Registro")
+    cantidad = models.IntegerField(validators=[MinValueValidator(1)], verbose_name="Cantidad")
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2, default=0, validators=[MinValueValidator(0)], verbose_name="Precio Unitario")
 
     class Meta:
-        verbose_name = "Detalle de Orden de Compra"
-        verbose_name_plural = "Detalles de Orden de Compra"
+        verbose_name = "Detalle de Orden"
+        verbose_name_plural = "Detalles de Orden"
+
+    @property
+    def subtotal(self):
+        return self.cantidad * self.precio_unitario
 
     def __str__(self):
-        return f"{self.producto.nombre} - Solicitado: {self.cantidad_solicitada}, Recibido: {self.cantidad_recibida}"
+        return f"{self.producto.nombre} x{self.cantidad}"
 
 
 class NotaEntrega(models.Model):

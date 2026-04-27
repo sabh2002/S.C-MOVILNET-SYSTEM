@@ -7,10 +7,11 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from django.db.models import Count, Q, F
 from django.db import transaction
+from django.http import JsonResponse
 
 from .models import (
     Marca, Proveedor, Cliente, Producto, PerfilEmpleado,
-    TipoInventario, MovimientoInventario, Cotizacion, DetalleCotizacion,
+    TipoInventario, MovimientoInventario,
     OrdenCompra, DetalleOrdenCompra, NotaEntrega, DetalleNotaEntrega
 )
 from .forms import (
@@ -18,7 +19,6 @@ from .forms import (
     LoginForm, CambiarPasswordForm, VerificarUsuarioForm,
     RecuperarPasswordForm, NuevaPasswordForm, RegistroEmpleadoForm,
     TipoInventarioForm, MovimientoInventarioForm,
-    CotizacionForm, DetalleCotizacionFormSet,
     OrdenCompraForm, DetalleOrdenCompraFormSet,
     NotaEntregaForm, DetalleNotaEntregaFormSet,
     EditarEmpleadoForm,
@@ -300,6 +300,18 @@ class MarcaDeleteView(LoginRequiredMixin, AdminRequeridoMixin, DeleteView):
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, '¡Marca eliminada exitosamente!')
         return super().delete(request, *args, **kwargs)
+
+
+@login_required
+def marca_crear_ajax(request):
+    """Crea una marca vía AJAX desde el modal del formulario de producto."""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+    form = MarcaForm(request.POST)
+    if form.is_valid():
+        marca = form.save()
+        return JsonResponse({'success': True, 'id': marca.pk, 'nombre': marca.nombre_marca})
+    return JsonResponse({'success': False, 'errors': form.errors})
 
 
 # ==================== CRUD PROVEEDOR ====================
@@ -597,107 +609,7 @@ def stock_actual_view(request):
     return render(request, 'inventario/stock_actual.html', context)
 
 
-# ==================== CRUD COTIZACIÓN ====================
-
-class CotizacionListView(LoginRequiredMixin, AdminRequeridoMixin, ListView):
-    model = Cotizacion
-    template_name = 'cotizaciones/cotizacion_list.html'
-    context_object_name = 'cotizaciones'
-    paginate_by = 10
-
-    def get_queryset(self):
-        queryset = super().get_queryset().select_related('proveedor')
-        search = self.request.GET.get('search')
-        if search:
-            queryset = queryset.filter(
-                Q(proveedor__nombre__icontains=search) |
-                Q(proveedor__rif__icontains=search)
-            )
-        return queryset
-
-
-class CotizacionDetailView(LoginRequiredMixin, AdminRequeridoMixin, DetailView):
-    model = Cotizacion
-    template_name = 'cotizaciones/cotizacion_detail.html'
-    context_object_name = 'cotizacion'
-
-
-class CotizacionCreateView(LoginRequiredMixin, AdminRequeridoMixin, CreateView):
-    model = Cotizacion
-    form_class = CotizacionForm
-    template_name = 'cotizaciones/cotizacion_form.html'
-    success_url = reverse_lazy('cotizacion_list')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if self.request.POST:
-            context['detalles'] = DetalleCotizacionFormSet(self.request.POST)
-        else:
-            context['detalles'] = DetalleCotizacionFormSet()
-        return context
-
-    def form_valid(self, form):
-        context = self.get_context_data()
-        detalles = context['detalles']
-        if not detalles.is_valid():
-            messages.error(self.request, 'Corrige los errores en los detalles de la cotización.')
-            return self.form_invalid(form)
-        with transaction.atomic():
-            self.object = form.save(commit=False)
-            self.object.save()
-            detalles.instance = self.object
-            detalles.save()
-            # Calcular total desde los detalles
-            self.object.total = sum(
-                d.cantidad * d.precio_unitario
-                for d in self.object.detalles.all()
-            )
-            self.object.save(update_fields=['total'])
-        messages.success(self.request, '¡Cotización creada exitosamente!')
-        return redirect(self.success_url)
-
-
-class CotizacionUpdateView(LoginRequiredMixin, AdminRequeridoMixin, UpdateView):
-    model = Cotizacion
-    form_class = CotizacionForm
-    template_name = 'cotizaciones/cotizacion_form.html'
-    success_url = reverse_lazy('cotizacion_list')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if self.request.POST:
-            context['detalles'] = DetalleCotizacionFormSet(self.request.POST, instance=self.object)
-        else:
-            context['detalles'] = DetalleCotizacionFormSet(instance=self.object)
-        return context
-
-    def form_valid(self, form):
-        context = self.get_context_data()
-        detalles = context['detalles']
-        if not detalles.is_valid():
-            messages.error(self.request, 'Corrige los errores en los detalles de la cotización.')
-            return self.form_invalid(form)
-        with transaction.atomic():
-            self.object = form.save()
-            detalles.instance = self.object
-            detalles.save()
-            # Recalcular total
-            self.object.total = sum(
-                d.cantidad * d.precio_unitario
-                for d in self.object.detalles.all()
-            )
-            self.object.save(update_fields=['total'])
-        messages.success(self.request, '¡Cotización actualizada exitosamente!')
-        return redirect(self.success_url)
-
-
-class CotizacionDeleteView(LoginRequiredMixin, AdminRequeridoMixin, DeleteView):
-    model = Cotizacion
-    template_name = 'cotizaciones/cotizacion_confirm_delete.html'
-    success_url = reverse_lazy('cotizacion_list')
-
-
-# ==================== CRUD ORDEN DE COMPRA ====================
+# ==================== CRUD ORDEN DE COMPRA / COMPRA ====================
 
 class OrdenCompraListView(LoginRequiredMixin, AdminRequeridoMixin, ListView):
     model = OrdenCompra
@@ -706,7 +618,7 @@ class OrdenCompraListView(LoginRequiredMixin, AdminRequeridoMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        return super().get_queryset().select_related('cotizacion__proveedor')
+        return super().get_queryset().select_related('proveedor')
 
 
 class OrdenCompraDetailView(LoginRequiredMixin, AdminRequeridoMixin, DetailView):
@@ -727,25 +639,29 @@ class OrdenCompraCreateView(LoginRequiredMixin, AdminRequeridoMixin, CreateView)
             context['detalles'] = DetalleOrdenCompraFormSet(self.request.POST)
         else:
             context['detalles'] = DetalleOrdenCompraFormSet()
+        context['productos_disponibles'] = Producto.objects.filter(estado=True).select_related('marca').order_by('nombre')
         return context
 
     def form_valid(self, form):
         context = self.get_context_data()
         detalles = context['detalles']
         if not detalles.is_valid():
-            messages.error(self.request, 'Corrige los errores en los detalles de la orden.')
+            messages.error(self.request, 'Corrige los errores en los productos.')
             return self.form_invalid(form)
         with transaction.atomic():
             self.object = form.save()
             detalles.instance = self.object
             detalles.save()
-            # Si ya se registran cantidades recibidas al crear, actualizar stock
-            for detalle in self.object.detalles.all():
-                if detalle.cantidad_recibida > 0:
-                    detalle.producto.stock_actual += detalle.cantidad_recibida
+            # Calcular total
+            self.object.total = sum(d.subtotal for d in self.object.detalles.all())
+            self.object.save(update_fields=['total'])
+            # Solo "Compra" actualiza el stock (mercancía ya recibida)
+            if self.object.tipo == 'compra':
+                for detalle in self.object.detalles.all():
+                    detalle.producto.stock_actual += detalle.cantidad
                     detalle.producto.save(update_fields=['stock_actual'])
-            self.object.actualizar_estado()
-        messages.success(self.request, '¡Orden de compra creada exitosamente!')
+        tipo_label = 'Compra' if self.object.tipo == 'compra' else 'Orden de compra'
+        messages.success(self.request, f'¡{tipo_label} registrada exitosamente!')
         return redirect(self.success_url)
 
 
@@ -761,36 +677,43 @@ class OrdenCompraUpdateView(LoginRequiredMixin, AdminRequeridoMixin, UpdateView)
             context['detalles'] = DetalleOrdenCompraFormSet(self.request.POST, instance=self.object)
         else:
             context['detalles'] = DetalleOrdenCompraFormSet(instance=self.object)
+        context['productos_disponibles'] = Producto.objects.filter(estado=True).select_related('marca').order_by('nombre')
         return context
 
     def form_valid(self, form):
         context = self.get_context_data()
         detalles = context['detalles']
         if not detalles.is_valid():
-            messages.error(self.request, 'Corrige los errores en los detalles de la orden.')
+            messages.error(self.request, 'Corrige los errores en los productos.')
             return self.form_invalid(form)
 
-        # Guardar cantidades recibidas ANTES de la actualización
+        tipo_previo = self.object.tipo
+        # Si era Compra, devolver el stock antes de recalcular
         cantidades_previas = {}
-        for detalle in self.object.detalles.all():
-            cantidades_previas[detalle.pk] = detalle.cantidad_recibida
+        if tipo_previo == 'compra':
+            for d in self.object.detalles.all():
+                cantidades_previas[d.pk] = {'cantidad': d.cantidad, 'producto': d.producto}
 
         with transaction.atomic():
+            if tipo_previo == 'compra':
+                for pk, info in cantidades_previas.items():
+                    info['producto'].stock_actual -= info['cantidad']
+                    info['producto'].save(update_fields=['stock_actual'])
+
             self.object = form.save()
             detalles.instance = self.object
             detalles.save()
 
-            # Calcular la diferencia y ajustar stock
-            for detalle in self.object.detalles.all():
-                cantidad_previa = cantidades_previas.get(detalle.pk, 0)
-                diferencia = detalle.cantidad_recibida - cantidad_previa
-                if diferencia != 0:
-                    detalle.producto.stock_actual += diferencia
+            self.object.total = sum(d.subtotal for d in self.object.detalles.all())
+            self.object.save(update_fields=['total'])
+
+            if self.object.tipo == 'compra':
+                for detalle in self.object.detalles.all():
+                    detalle.producto.refresh_from_db()
+                    detalle.producto.stock_actual += detalle.cantidad
                     detalle.producto.save(update_fields=['stock_actual'])
 
-            self.object.actualizar_estado()
-
-        messages.success(self.request, '¡Orden de compra actualizada!')
+        messages.success(self.request, '¡Registro actualizado exitosamente!')
         return redirect(self.success_url)
 
 
@@ -798,6 +721,18 @@ class OrdenCompraDeleteView(LoginRequiredMixin, AdminRequeridoMixin, DeleteView)
     model = OrdenCompra
     template_name = 'ordenes/orden_compra_confirm_delete.html'
     success_url = reverse_lazy('orden_compra_list')
+
+    def delete(self, request, *args, **kwargs):
+        orden = self.get_object()
+        with transaction.atomic():
+            # Si era Compra, devolver el stock al eliminar
+            if orden.tipo == 'compra':
+                for detalle in orden.detalles.all():
+                    detalle.producto.stock_actual -= detalle.cantidad
+                    detalle.producto.save(update_fields=['stock_actual'])
+            orden.delete()
+        messages.success(request, '¡Registro eliminado exitosamente!')
+        return redirect(self.success_url)
 
 
 # ==================== CRUD NOTA DE ENTREGA ====================
@@ -837,6 +772,7 @@ class NotaEntregaCreateView(LoginRequiredMixin, CreateView):
             context['detalles'] = DetalleNotaEntregaFormSet(self.request.POST)
         else:
             context['detalles'] = DetalleNotaEntregaFormSet()
+        context['productos'] = Producto.objects.filter(estado=True).select_related('marca').order_by('nombre')
         return context
 
     def form_valid(self, form):
@@ -910,6 +846,7 @@ class NotaEntregaUpdateView(LoginRequiredMixin, UpdateView):
             context['detalles'] = DetalleNotaEntregaFormSet(self.request.POST, instance=self.object)
         else:
             context['detalles'] = DetalleNotaEntregaFormSet(instance=self.object)
+        context['productos'] = Producto.objects.filter(estado=True).select_related('marca').order_by('nombre')
         return context
 
     def form_valid(self, form):

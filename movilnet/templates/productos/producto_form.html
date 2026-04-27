@@ -49,12 +49,12 @@
                         <label for="{{ form.marca.id_for_label }}">{{ form.marca.label }} <span class="required">*</span></label>
                         <div style="display: flex; gap: 8px; align-items: flex-start;">
                             <div style="flex: 1;">{{ form.marca }}</div>
-                            <a href="{% url 'marca_create' %}" target="_blank"
+                            <button type="button" id="btn-nueva-marca"
                                class="btn btn-outline"
                                style="padding: 10px 14px; white-space: nowrap;"
                                title="Crear nueva marca">
                                 <i class="fas fa-plus"></i>
-                            </a>
+                            </button>
                         </div>
                         {% if form.marca.errors %}
                             <div class="form-error">{{ form.marca.errors }}</div>
@@ -135,4 +135,71 @@
         </div>
     </form>
 </div>
+
+<!-- Modal agregar marca -->
+<dialog id="modal-marca" style="border: none; border-radius: 8px; padding: 0; box-shadow: 0 8px 32px rgba(0,0,0,0.2); width: 360px; max-width: 95vw;">
+    <div style="padding: 24px;">
+        <h3 style="margin: 0 0 16px; font-size: 1rem; color: var(--primary-color);">
+            <i class="fas fa-tag"></i> Nueva Marca
+        </h3>
+        <form id="form-marca">
+            {% csrf_token %}
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label style="display:block; margin-bottom: 6px; font-weight: 500;">Nombre de la marca *</label>
+                <input type="text" name="nombre_marca" id="input-nombre-marca" class="form-control" placeholder="Ej. Samsung" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 400;">
+                    <input type="checkbox" name="estado" checked> Activo
+                </label>
+            </div>
+            <div id="marca-error" style="color: #dc3545; font-size: 0.875rem; margin-bottom: 12px;"></div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" id="btn-cancelar-marca" class="btn btn-outline">Cancelar</button>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar</button>
+            </div>
+        </form>
+    </div>
+</dialog>
+
+<script>
+const modal = document.getElementById('modal-marca');
+const btnNueva = document.getElementById('btn-nueva-marca');
+const btnCancelar = document.getElementById('btn-cancelar-marca');
+const formMarca = document.getElementById('form-marca');
+const errorDiv = document.getElementById('marca-error');
+
+btnNueva.addEventListener('click', () => {
+    document.getElementById('input-nombre-marca').value = '';
+    errorDiv.textContent = '';
+    modal.showModal();
+});
+
+btnCancelar.addEventListener('click', () => modal.close());
+modal.addEventListener('click', (e) => { if (e.target === modal) modal.close(); });
+
+formMarca.addEventListener('submit', function(e) {
+    e.preventDefault();
+    errorDiv.textContent = '';
+    const data = new FormData(this);
+    fetch('{% url "marca_crear_ajax" %}', {
+        method: 'POST',
+        headers: {'X-CSRFToken': '{{ csrf_token }}'},
+        body: data
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.success) {
+            const select = document.getElementById('{{ form.marca.id_for_label }}');
+            const opt = new Option(res.nombre, res.id, true, true);
+            select.add(opt);
+            modal.close();
+        } else {
+            const msgs = Object.values(res.errors || {}).flat().join(', ');
+            errorDiv.textContent = msgs || 'Error al guardar la marca.';
+        }
+    })
+    .catch(() => { errorDiv.textContent = 'Error de conexión.'; });
+});
+</script>
 {% endblock %}

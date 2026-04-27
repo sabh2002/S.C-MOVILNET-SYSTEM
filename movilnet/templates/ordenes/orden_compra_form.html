@@ -1,60 +1,98 @@
 {% extends 'base.html' %}
 
-{% block title %}{% if object %}Editar{% else %}Nueva{% endif %} Orden de Compra - Movilnet System{% endblock %}
+{% block title %}{% if object %}Editar{% else %}Nueva{% endif %} Orden/Compra - Movilnet System{% endblock %}
 
 {% block content %}
-<div class="header-section" style="margin-bottom: 30px;">
-    <h1 class="header-title">{% if object %}Editar{% else %}Nueva{% endif %} Orden de Compra</h1>
+<div class="page-header">
+    <div class="page-header-left">
+        <div class="breadcrumb">
+            <a href="{% url 'dashboard' %}"><i class="fas fa-home"></i></a>
+            <span>/</span>
+            <a href="{% url 'orden_compra_list' %}">Órdenes y Compras</a>
+            <span>/</span>
+            <span>{% if object %}Editar{% else %}Nuevo{% endif %}</span>
+        </div>
+        <h1 class="page-title">{% if object %}Editar Registro{% else %}Nueva Orden / Compra{% endif %}</h1>
+    </div>
 </div>
 
 <div style="background: white; padding: 30px; border-radius: 8px;">
-    <form method="post">
+    <form method="post" id="form-principal">
         {% csrf_token %}
 
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>{{ form.non_field_errors }}</span>
+            </div>
+        {% endif %}
+
         <h3 style="color: var(--text-gray); font-size: 0.9rem; text-transform: uppercase; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid var(--primary-color);">
-            Datos de la Orden
+            Datos Principales
         </h3>
 
-        <div class="form-grid">
-            <div class="form-group" style="margin-bottom: 18px;">
-                <label style="display:block; margin-bottom: 6px; font-weight: 500;">Cotización *</label>
-                {{ form.cotizacion }}
+        <div class="form-grid" style="margin-bottom: 20px;">
+            <div class="form-group">
+                <label style="display:block; margin-bottom: 6px; font-weight: 500;">Proveedor *</label>
+                {{ form.proveedor }}
+                {% if form.proveedor.errors %}<div class="form-error">{{ form.proveedor.errors.0 }}</div>{% endif %}
             </div>
-            <div class="form-group" style="margin-bottom: 18px;">
-                <label style="display:block; margin-bottom: 6px; font-weight: 500;">Número de Orden *</label>
+            <div class="form-group">
+                <label style="display:block; margin-bottom: 6px; font-weight: 500;">Tipo *</label>
+                {{ form.tipo }}
+                <small style="color: var(--text-gray); font-size: 0.8rem;">
+                    Orden: pedido al proveedor (no afecta stock). Compra: mercancía recibida (suma al stock).
+                </small>
+                {% if form.tipo.errors %}<div class="form-error">{{ form.tipo.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="form-group">
+                <label style="display:block; margin-bottom: 6px; font-weight: 500;">Número *</label>
                 {{ form.numero_orden }}
+                {% if form.numero_orden.errors %}<div class="form-error">{{ form.numero_orden.errors.0 }}</div>{% endif %}
             </div>
-            <div class="form-group" style="margin-bottom: 18px;">
-                <label style="display:block; margin-bottom: 6px; font-weight: 500;">Fecha de Orden *</label>
+            <div class="form-group">
+                <label style="display:block; margin-bottom: 6px; font-weight: 500;">Fecha *</label>
                 {{ form.fecha_orden }}
+                {% if form.fecha_orden.errors %}<div class="form-error">{{ form.fecha_orden.errors.0 }}</div>{% endif %}
             </div>
         </div>
 
-        <h3 style="color: var(--text-gray); font-size: 0.9rem; text-transform: uppercase; margin: 24px 0 16px; padding-bottom: 8px; border-bottom: 2px solid var(--primary-color);">
+        <div class="form-group" style="margin-bottom: 24px;">
+            <label style="display:block; margin-bottom: 6px; font-weight: 500;">Observaciones</label>
+            {{ form.observaciones }}
+        </div>
+
+        <h3 style="color: var(--text-gray); font-size: 0.9rem; text-transform: uppercase; margin: 0 0 16px; padding-bottom: 8px; border-bottom: 2px solid var(--primary-color);">
             Productos
         </h3>
 
         {{ detalles.management_form }}
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;" id="tabla-detalles">
             <thead>
                 <tr style="background-color: var(--bg-light);">
                     <th style="padding: 10px; text-align: left;">Producto</th>
-                    <th style="padding: 10px; text-align: center;">Cant. Solicitada</th>
-                    <th style="padding: 10px; text-align: center;">Cant. Recibida</th>
-                    <th style="padding: 10px; text-align: center;">Eliminar</th>
+                    <th style="padding: 10px; text-align: center; width: 120px;">Cantidad</th>
+                    <th style="padding: 10px; text-align: center; width: 140px;">Precio Unit. ($)</th>
+                    <th style="padding: 10px; text-align: center; width: 80px;">Quitar</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="formset-body">
                 {% for detalle in detalles %}
-                <tr style="border-bottom: 1px solid var(--border-color);">
-                    <td style="padding: 10px;">{{ detalle.id }}{{ detalle.producto }}</td>
-                    <td style="padding: 10px; text-align: center;">{{ detalle.cantidad_solicitada }}</td>
-                    <td style="padding: 10px; text-align: center;">{{ detalle.cantidad_recibida }}</td>
-                    <td style="padding: 10px; text-align: center;">{{ detalle.DELETE }}</td>
+                <tr class="detalle-row" style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 8px;">{{ detalle.id }}{{ detalle.producto }}</td>
+                    <td style="padding: 8px; text-align: center;">{{ detalle.cantidad }}</td>
+                    <td style="padding: 8px; text-align: center;">{{ detalle.precio_unitario }}</td>
+                    <td style="padding: 8px; text-align: center;">{{ detalle.DELETE }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+
+        <div style="margin-bottom: 24px;">
+            <button type="button" id="btn-agregar-producto" class="btn btn-outline" style="font-size: 0.875rem;">
+                <i class="fas fa-plus"></i> Agregar producto
+            </button>
+        </div>
 
         <div style="display: flex; gap: 10px;">
             <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar</button>
@@ -62,4 +100,44 @@
         </div>
     </form>
 </div>
+
+<!-- Fila plantilla oculta para clonar con JS -->
+<table style="display:none;">
+    <tbody>
+        <tr id="fila-template" class="detalle-row" style="border-bottom: 1px solid var(--border-color);">
+            <td style="padding: 8px;">
+                <select name="detalles-__prefix__-producto" class="form-control producto-select">
+                    <option value="">---------</option>
+                    {% for p in productos_disponibles %}
+                    <option value="{{ p.pk }}">{{ p.nombre }} - {{ p.marca.nombre_marca }}</option>
+                    {% endfor %}
+                </select>
+                <input type="hidden" name="detalles-__prefix__-id" value="">
+            </td>
+            <td style="padding: 8px; text-align: center;">
+                <input type="number" name="detalles-__prefix__-cantidad" class="form-control" min="1" value="1">
+            </td>
+            <td style="padding: 8px; text-align: center;">
+                <input type="number" name="detalles-__prefix__-precio_unitario" class="form-control" min="0" step="0.01" value="0.00" placeholder="0.00">
+            </td>
+            <td style="padding: 8px; text-align: center;">
+                <input type="checkbox" name="detalles-__prefix__-DELETE">
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<script>
+document.getElementById('btn-agregar-producto').addEventListener('click', function () {
+    const totalForms = document.getElementById('id_detalles-TOTAL_FORMS');
+    const idx = parseInt(totalForms.value);
+    const template = document.getElementById('fila-template');
+    const nuevaFila = template.cloneNode(true);
+    nuevaFila.removeAttribute('id');
+    nuevaFila.style.display = '';
+    nuevaFila.innerHTML = nuevaFila.innerHTML.replace(/__prefix__/g, idx);
+    document.getElementById('formset-body').appendChild(nuevaFila);
+    totalForms.value = idx + 1;
+});
+</script>
 {% endblock %}
